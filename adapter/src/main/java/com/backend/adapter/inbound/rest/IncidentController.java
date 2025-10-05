@@ -273,9 +273,6 @@ public class IncidentController {
                 .build();
           })
           .toList();
-//      List<IncidentPreviewResponseDto> responseDtos = results.stream()
-//          .map(incidentMapper::toIncidentPreviewResponseDto)
-//          .toList();
 
       return ResponseEntity.ok(responseDtos);
     } catch (InvalidCoordinatesException e) {
