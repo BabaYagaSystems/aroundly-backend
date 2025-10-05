@@ -17,6 +17,7 @@ public class MinioConfig {
       .endpoint(properties.getEndpoint())
       .credentials(properties.getAccessKey(), properties.getSecretKey())
       .build();
+
   }
 
   @Bean
