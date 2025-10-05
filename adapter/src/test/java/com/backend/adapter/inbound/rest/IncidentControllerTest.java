@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -18,9 +17,9 @@ import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponse
 import com.backend.adapter.inbound.mapper.IncidentMapper;
 import com.backend.adapter.inbound.mapper.LocationMapper;
 import com.backend.adapter.inbound.mapper.assembler.IncidentDtoAssembler;
+import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
-import com.backend.adapter.outbound.factory.MediaPreviewFactory;
 import com.backend.domain.actor.ActorId;
 import com.backend.domain.happening.Happening;
 import com.backend.domain.happening.Incident;
@@ -60,7 +59,7 @@ class IncidentControllerTest {
   @Mock private IncidentDtoAssembler incidentDtoAssembler;
   @Mock private IncidentMapper incidentMapper;
   @Mock private LocationMapper locationMapper;
-  @Mock private MediaPreviewFactory mediaPreviewFactory;
+  @Mock private IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
   @InjectMocks private IncidentController controller;
 
   @Test
@@ -121,7 +120,7 @@ class IncidentControllerTest {
   @Test
   void testGetIncidentInPreview() throws IOException {
     when(incidentUseCase.findById(HAPPENING_ID)).thenReturn(createIncident());
-    when(incidentMapper.toIncidentPreviewResponseDto(any(Incident.class)))
+    when(incidentPreviewDtoAssembler.toPreviewDto(any(Incident.class)))
         .thenReturn(createIncidentPreviewResponseDto());
 
     ResponseEntity<IncidentPreviewResponseDto> response =
@@ -153,7 +152,7 @@ class IncidentControllerTest {
   void testFindActorIncidentsInPreview() throws IOException {
     final List<Happening> happenings = List.of(createIncident());
     when(incidentUseCase.findByActorId(ACTOR_ID)).thenReturn(happenings);
-    when(incidentMapper.toIncidentPreviewResponseDto(any(Incident.class)))
+    when(incidentPreviewDtoAssembler.toPreviewDto(any(Incident.class)))
         .thenReturn(createIncidentPreviewResponseDto());
 
     ResponseEntity<List<IncidentPreviewResponseDto>> response =
@@ -171,9 +170,8 @@ class IncidentControllerTest {
     when(locationMapper.toRadiusCommand(createRadiusRequestDto())).thenReturn(createRadiusCommand());
     when(incidentUseCase.findAllInGivenRange(createRadiusCommand()))
         .thenReturn(List.of(createIncident()));
-    when(incidentMapper.toIncidentPreviewResponseDto(any(Incident.class)))
+    when(incidentPreviewDtoAssembler.toPreviewDto(any(Incident.class)))
         .thenReturn(createIncidentPreviewResponseDto());
-    when(mediaPreviewFactory.build(anySet())).thenReturn(createMediaDtos());
 
     ResponseEntity<List<IncidentPreviewResponseDto>> response =
         controller.findNearbyIncidents(createRadiusRequestDto());
@@ -299,6 +297,8 @@ class IncidentControllerTest {
     return IncidentPreviewResponseDto.builder()
       .title("title")
       .media(createMediaDtos())
+      .lat(12.12)
+      .lon(43.43)
       .build();
   }
 

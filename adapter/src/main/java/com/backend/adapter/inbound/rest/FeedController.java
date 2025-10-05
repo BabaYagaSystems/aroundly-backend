@@ -2,10 +2,9 @@ package com.backend.adapter.inbound.rest;
 
 import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
-import com.backend.adapter.inbound.mapper.IncidentMapper;
+import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.mapper.LocationMapper;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
-import com.backend.adapter.outbound.factory.MediaPreviewFactory;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.RadiusCommand;
@@ -33,21 +32,17 @@ public class FeedController {
 
   private final LocationMapper locationMapper;
   private final IncidentUseCase incidentUseCase;
-  private final IncidentMapper incidentMapper;
-  private final MediaPreviewFactory mediaPreviewFactory;
+  private final IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
 
   public FeedController(
       LocationMapper locationMapper,
       IncidentUseCase incidentUseCase,
-      IncidentMapper incidentMapper,
-      MediaPreviewFactory mediaPreviewFactory) {
+      IncidentPreviewDtoAssembler incidentPreviewDtoAssembler) {
 
     this.locationMapper = locationMapper;
     this.incidentUseCase = incidentUseCase;
-    this.incidentMapper = incidentMapper;
-    this.mediaPreviewFactory = mediaPreviewFactory;
+    this.incidentPreviewDtoAssembler = incidentPreviewDtoAssembler;
   }
-
 
   @GetMapping
     @Operation(
@@ -65,12 +60,7 @@ public class FeedController {
         RadiusCommand radiusCommand = locationMapper.toRadiusCommand(radiusRequestDto);
         List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
         List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
-            .map(incident -> {
-              IncidentPreviewResponseDto dto = incidentMapper.toIncidentPreviewResponseDto(incident);
-              return dto.toBuilder()
-                  .media(mediaPreviewFactory.build(incident.media()))
-                  .build();
-            })
+            .map(incidentPreviewDtoAssembler::toPreviewDto)
             .toList();
 
         return ResponseEntity.ok(responseDtos);

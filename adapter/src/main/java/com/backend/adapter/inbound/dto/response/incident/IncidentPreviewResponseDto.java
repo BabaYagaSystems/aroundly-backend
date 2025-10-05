@@ -24,4 +24,16 @@ public record IncidentPreviewResponseDto(
     @Schema(
         description = "Collection of related media files (images, videos, etc.)"
     )
-    Set<MediaDto> media) { }
+    Set<MediaDto> media,
+
+    @Schema(
+        description = "Latitude coordinate where the incident is located",
+        example = "52.5200"
+    )
+    double lat,
+
+    @Schema(
+        description = "Longitude coordinate where the incident is located",
+        example = "13.4050"
+    )
+    double lon) { }
