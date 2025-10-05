@@ -55,5 +55,8 @@ public interface IncidentMapper {
    * @param incident the domain incident entity
    * @return a preview response DTO
    */
+  @Mapping(target = "lon", ignore = true)
+  @Mapping(target = "lat", ignore = true)
   IncidentPreviewResponseDto toIncidentPreviewResponseDto(Incident incident);
+
 }

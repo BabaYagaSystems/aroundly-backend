@@ -7,13 +7,13 @@ import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponse
 import com.backend.adapter.inbound.mapper.IncidentMapper;
 import com.backend.adapter.inbound.mapper.LocationMapper;
 import com.backend.adapter.inbound.mapper.assembler.IncidentDtoAssembler;
+import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.rest.exception.incident.ActorNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.DuplicateIncidentException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfirmedException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
-import com.backend.adapter.outbound.factory.MediaPreviewFactory;
 import com.backend.domain.happening.Happening;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
@@ -55,23 +55,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class IncidentController {
 
   private final IncidentUseCase incidentUseCase;
-  private final MediaPreviewFactory mediaPreviewFactory;
   private final IncidentDtoAssembler assembler;
   private final IncidentMapper incidentMapper;
   private final LocationMapper locationMapper;
+  private final IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
-      MediaPreviewFactory mediaPreviewFactory,
       IncidentDtoAssembler assembler,
       IncidentMapper incidentMapper,
-      LocationMapper locationMapper) {
+      LocationMapper locationMapper,
+      IncidentPreviewDtoAssembler incidentPreviewDtoAssembler) {
 
     this.incidentUseCase = incidentUseCase;
-    this.mediaPreviewFactory = mediaPreviewFactory;
     this.incidentMapper = incidentMapper;
     this.assembler = assembler;
     this.locationMapper = locationMapper;
+    this.incidentPreviewDtoAssembler = incidentPreviewDtoAssembler;
   }
 
   /**
@@ -169,7 +169,7 @@ public class IncidentController {
     try {
       Incident incident = (Incident) incidentUseCase.findById(id);
       IncidentPreviewResponseDto incidentPreviewResponseDto =
-          incidentMapper.toIncidentPreviewResponseDto(incident);
+          incidentPreviewDtoAssembler.toPreviewDto(incident);
 
       return ResponseEntity.ok(incidentPreviewResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -234,7 +234,7 @@ public class IncidentController {
       List<IncidentPreviewResponseDto> incidentPreviewResponseDtos = incidents.stream()
           .filter(happening -> happening instanceof Incident)
           .map(happening -> (Incident) happening)
-          .map(incidentMapper::toIncidentPreviewResponseDto)
+          .map(incidentPreviewDtoAssembler::toPreviewDto)
           .toList();
 
       return ResponseEntity.ok(incidentPreviewResponseDtos);
@@ -266,13 +266,9 @@ public class IncidentController {
       RadiusCommand radiusCommand = locationMapper.toRadiusCommand(radiusRequestDto);
       List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
       List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
-          .map(incident -> {
-            IncidentPreviewResponseDto dto = incidentMapper.toIncidentPreviewResponseDto(incident);
-            return dto.toBuilder()
-                .media(mediaPreviewFactory.build(incident.media()))
-                .build();
-          })
+          .map(incidentPreviewDtoAssembler::toPreviewDto)
           .toList();
+
 
       return ResponseEntity.ok(responseDtos);
     } catch (InvalidCoordinatesException e) {
