@@ -223,6 +223,10 @@ public class IncidentService implements IncidentUseCase {
             Incident incident = castToIncident(findById(incidentId));
             incident.confirmIncident();
 
+            /// The incident is not updated but a whole another incident is created cause incident don't have an ID
+
+            System.out.println("Incident ID before save: " + incident.getId());
+
             return incidentRepository.save(incident);
 
         } catch (IncidentNotFoundException | IncidentAlreadyConfirmedException e) {
