@@ -29,6 +29,10 @@ import lombok.experimental.SuperBuilder;
 public abstract class Happening implements
     Actored, Locatable, HasMedia, Reactable {
 
+
+  // dont set Id final as JPA wont see it
+  protected Long id;
+
   private final ActorId actorId;
 
   private final LocationId locationId;
@@ -45,11 +49,13 @@ public abstract class Happening implements
   private String description;
 
   protected Happening(
+          @NonNull Long id,
       @NonNull ActorId actorId,
       @NonNull LocationId locationId,
       @NonNull Set<Media> media,
       String title,
       String description) {
+    this.id = id;
     this.actorId = actorId;
     this.locationId = locationId;
     this.sentimentEngagement = new SentimentEngagement(0, 0);
