@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS medias (
                                          CONSTRAINT FK_MEDIA_HAPPENING FOREIGN KEY (happening_id) REFERENCES happenings (id)
     );
 
-ALTER TABLE medias OWNER TO appuser;
+ALTER TABLE medias OWNER TO root;
 
 CREATE SEQUENCE media_id_seq;
-ALTER SEQUENCE media_id_seq OWNER TO appuser;
+ALTER SEQUENCE media_id_seq OWNER TO root;

@@ -3,16 +3,17 @@ package com.backend.adapter.outbound.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity(name = "locations")
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class LocationEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "location_id_seq")
     @SequenceGenerator(name = "location_id_seq", sequenceName = "location_id_seq", allocationSize = 1)
-    private long id;
+    private Long id;
 
     @Column(name = "lat", nullable = false)
     private double lat;
@@ -23,20 +24,12 @@ public class LocationEntity {
     @Column(name = "address_text")
     private String addressText;
 
-    public LocationEntity() { }
-
-    public LocationEntity(long id, double lat, double lng, String addressText) {
-        this.id = id;
-        this.lat = lat;
-        this.lng = lng;
-        this.addressText = addressText;
-    }
-
-    public long getId() {
+    // Explicit getters and setters for MapStruct
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 

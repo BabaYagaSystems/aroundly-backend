@@ -13,8 +13,8 @@ CREATE TABLE IF NOT EXISTS happenings (
     CONSTRAINT FK_HAPPENING_LOCATION FOREIGN KEY (location_id) REFERENCES locations (id)
     );
 
-ALTER TABLE happenings OWNER TO appuser;
+ALTER TABLE happenings OWNER TO root;
 
 CREATE SEQUENCE happening_id_seq;
-ALTER SEQUENCE happening_id_seq OWNER TO appuser;
+ALTER SEQUENCE happening_id_seq OWNER TO root;
 
