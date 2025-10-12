@@ -150,8 +150,8 @@ class IncidentControllerTest {
 
   @Test
   void testFindActorIncidentsInPreview() throws IOException {
-    final List<Happening> happenings = List.of(createIncident());
-    when(incidentUseCase.findByActorId(ACTOR_ID)).thenReturn(happenings);
+    final List<Incident> incidents = List.of(createIncident());
+    when(incidentUseCase.findByActorId(ACTOR_ID)).thenReturn(incidents);
     when(incidentPreviewDtoAssembler.toPreviewDto(any(Incident.class)))
         .thenReturn(createIncidentPreviewResponseDto());
 

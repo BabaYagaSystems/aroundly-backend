@@ -6,7 +6,6 @@ import com.backend.adapter.outbound.entity.LocationEntity;
 import com.backend.adapter.outbound.entity.MediaEntity;
 import com.backend.adapter.outbound.mapper.MediaEntityMapper;
 import com.backend.adapter.outbound.repo.*;
-import com.backend.domain.happening.Happening;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Repository
-public class FakeIncidentPersistenceRepository implements IncidentRepository {
+public class IncidentPersistence implements IncidentRepository {
 
     private final IncidentPersistenceRepository incidentPersistenceRepository; //For DB
     private final HappeningPersistenceRepository happeningPersistenceRepository;
@@ -37,7 +36,7 @@ public class FakeIncidentPersistenceRepository implements IncidentRepository {
 
     private final MediaEntityMapper mediaEntityMapper;
     
-    private final Map<Long, Happening> storage = new ConcurrentHashMap<>();
+    private final Map<Long, Incident> storage = new ConcurrentHashMap<>();
     private final AtomicLong idGenerator = new AtomicLong(1);
     private final LocationPersistenceRepository locationPersistenceRepository;
 
@@ -95,7 +94,7 @@ public class FakeIncidentPersistenceRepository implements IncidentRepository {
     }
 
     @Override
-    public Optional<Happening> findById(long id) {
+    public Optional<Incident> findById(long id) {
         return Optional.ofNullable(storage.get(id));
     }
 
@@ -109,8 +108,7 @@ public class FakeIncidentPersistenceRepository implements IncidentRepository {
         final double radiusKm = radiusMeters / 1000.0;
 
         return storage.values().stream()
-            .filter(h -> h instanceof Incident)
-            .map(Incident.class::cast)
+            .filter(Objects::nonNull)
             .filter(i -> {
                 LocationId locationId = i.locationId();
                 Location location = locationRepository.findById(locationId.value());
@@ -140,7 +138,7 @@ public class FakeIncidentPersistenceRepository implements IncidentRepository {
     }
 
     @Override
-    public List<Happening> findByUserId(String userId) {
+    public List<Incident> findByUserId(String userId) {
         return storage.values().stream()
                 .filter(Objects::nonNull)
                 .toList();

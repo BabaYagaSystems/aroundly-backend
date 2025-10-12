@@ -9,7 +9,7 @@ import java.util.Optional;
  *
  * Provides methods for retrieving and deleting happenings.
  */
-public interface HappeningRepository {
+public interface HappeningRepository<T extends Happening> {
 
   /**
    * Finds a Happening by its unique identifier.
@@ -17,7 +17,7 @@ public interface HappeningRepository {
    * @param happeningId the identifier of the Happening
    * @return the Happening with the given id
    */
-  Optional<Happening> findById(long happeningId);
+  Optional<T> findById(long happeningId);
 
   /**
    * Checks if a Happening exists by its unique identifier.
@@ -33,7 +33,7 @@ public interface HappeningRepository {
    * @param userId the identifier of the user (actor)
    * @return the list of Happenings created by the user
    */
-  List<Happening> findByUserId(String userId);
+  List<T> findByUserId(String userId);
 
   /**
    * Deletes a Happening by its unique identifier.
