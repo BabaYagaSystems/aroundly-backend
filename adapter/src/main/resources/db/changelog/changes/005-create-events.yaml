@@ -5,6 +5,8 @@ databaseChangeLog:
       preConditions:
         - not:
             sequenceExists:
+              onFail: WARN
+              onError: WARN
               sequenceName: event_id_seq
       changes:
         - createSequence:
