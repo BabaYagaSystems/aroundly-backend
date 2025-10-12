@@ -11,8 +11,5 @@ CREATE TABLE IF NOT EXISTS comments (
     CONSTRAINT FK_COMMENT_CLIENT FOREIGN KEY (client_id) REFERENCES clients (id)
     );
 
-ALTER TABLE comments OWNER TO postgres;
-
 CREATE SEQUENCE comment_id_seq;
-ALTER SEQUENCE comment_id_seq OWNER TO postgres;
 

@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-reactions
+      author: babayaga
+      changes:
+        - sqlFile:
+            path: ../sql/007-create-reactions-table.sql
+            relativeToChangelogFile: true
+
+        - sql:
+            sql: ALTER TABLE reactions OWNER TO ${schema.owner}

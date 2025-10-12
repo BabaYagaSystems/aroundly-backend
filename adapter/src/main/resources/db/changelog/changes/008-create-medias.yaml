@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-medias
+      author: babayaga
+      changes:
+        - sqlFile:
+            path: ../sql/008-create-medias-table.sql
+            relativeToChangelogFile: true
+
+        - sql:
+            sql: ALTER TABLE medias OWNER TO ${schema.owner}

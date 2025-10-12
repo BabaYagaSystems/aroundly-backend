@@ -12,7 +12,4 @@ CREATE TABLE IF NOT EXISTS medias (
                                          CONSTRAINT FK_MEDIA_HAPPENING FOREIGN KEY (happening_id) REFERENCES happenings (id)
     );
 
-ALTER TABLE medias OWNER TO postgres;
-
 CREATE SEQUENCE media_id_seq;
-ALTER SEQUENCE media_id_seq OWNER TO postgres;

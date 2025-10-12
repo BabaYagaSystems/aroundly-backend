@@ -8,7 +8,5 @@ CREATE TABLE IF NOT EXISTS clients (
     range_km    INT
     );
 
-ALTER TABLE clients OWNER TO postgres;
-
 CREATE SEQUENCE client_id_seq;
-ALTER SEQUENCE client_id_seq OWNER TO postgres;
+-- ALTER SEQUENCE client_id_seq OWNER TO ${schema.owner};

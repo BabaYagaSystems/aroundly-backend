@@ -8,8 +8,5 @@ CREATE TABLE IF NOT EXISTS locations (
                                          address_text VARCHAR(500)
     );
 
-ALTER TABLE locations OWNER TO postgres;
-
 CREATE SEQUENCE location_id_seq;
-ALTER SEQUENCE location_id_seq OWNER TO postgres;
 
