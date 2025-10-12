@@ -12,8 +12,3 @@ CREATE TABLE IF NOT EXISTS reactions (
     CONSTRAINT FK_REACTION_COMMENT FOREIGN KEY (comment_id) REFERENCES comments (id),
     CONSTRAINT FK_REACTION_CLIENT FOREIGN KEY (client_id) REFERENCES clients (id)
     );
-
-ALTER TABLE reactions OWNER TO postgres;
-
-CREATE SEQUENCE reaction_id_seq;
-ALTER SEQUENCE reaction_id_seq OWNER TO postgres;

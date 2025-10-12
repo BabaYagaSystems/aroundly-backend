@@ -7,9 +7,3 @@ CREATE TABLE IF NOT EXISTS locations (
                                          lng          DOUBLE PRECISION NOT NULL,
                                          address_text VARCHAR(500)
     );
-
-ALTER TABLE locations OWNER TO postgres;
-
-CREATE SEQUENCE location_id_seq;
-ALTER SEQUENCE location_id_seq OWNER TO postgres;
-

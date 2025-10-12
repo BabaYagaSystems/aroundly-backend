@@ -10,9 +10,3 @@ CREATE TABLE IF NOT EXISTS incidents (
                                          denies       INT,
                                          CONSTRAINT FK_INCIDENT_HAPPENING FOREIGN KEY (happening_id) REFERENCES happenings (id)
     );
-
-ALTER TABLE incidents OWNER TO postgres;
-
-CREATE SEQUENCE incident_id_seq;
-ALTER SEQUENCE incident_id_seq OWNER TO postgres;
-

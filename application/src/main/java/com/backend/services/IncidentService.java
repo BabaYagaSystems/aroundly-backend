@@ -120,22 +120,22 @@ public class IncidentService implements IncidentUseCase {
 
         validateCreateIncidentCommand(createIncidentCommand);
 
-    try {
-      final ActorId actorId = new ActorId("abc-123");
-      final String title = createIncidentCommand.title();
-      final String description = createIncidentCommand.description();
-      final Set<UploadMediaCommand> media = createIncidentCommand.media();
-      final Location location;
+        try {
+          final ActorId actorId = new ActorId("abc-123");
+          final String title = createIncidentCommand.title();
+          final String description = createIncidentCommand.description();
+          final Set<UploadMediaCommand> media = createIncidentCommand.media();
+          final Location location;
 
-            try {
-                CoordinatesCommand coordinatesCommand = new CoordinatesCommand(latitude, longitude);
-                location = locationService.findByCoordinates(coordinatesCommand);
-            } catch (RuntimeException e) {
-                throw new LocationNotFoundException(
-                        String.format("Location not found for coordinates: lat=%f, lon=%f",
-                                createIncidentCommand.lat(), createIncidentCommand.lon()),
-                        e);
-            }
+          try {
+              CoordinatesCommand coordinatesCommand = new CoordinatesCommand(latitude, longitude);
+              location = locationService.findByCoordinates(coordinatesCommand);
+          } catch (RuntimeException e) {
+              throw new LocationNotFoundException(
+                      String.format("Location not found for coordinates: lat=%f, lon=%f",
+                              createIncidentCommand.lat(), createIncidentCommand.lon()),
+                      e);
+        }
 
       final LocationId locationId = location.id();
       final Set<Media> uploadedMedia = objectStoragePort.uploadAll(media);

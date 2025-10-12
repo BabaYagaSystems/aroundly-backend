@@ -1,6 +1,5 @@
 package com.backend.adapter.outbound.storage;
 
-import com.backend.adapter.outbound.repo.persistence.MediaPersistence;
 import com.backend.domain.media.Media;
 import com.backend.port.inbound.commands.UploadMediaCommand;
 import com.backend.port.outbound.storage.ObjectStoragePort;
@@ -28,7 +27,6 @@ public class MinioObjectStorageAdapter implements ObjectStoragePort {
 
   private final MinioClient minioClient;
   private final String bucket;
-  private final MediaPersistence mediaPersistence;
 
   /**
    * Uploads all media, creating the bucket if needed.

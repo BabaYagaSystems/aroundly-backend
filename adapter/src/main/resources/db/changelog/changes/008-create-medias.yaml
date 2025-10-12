@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-medias
+      author: babayaga
+      preConditions:
+        - onFail: WARN
+        - onError: WARN
+        - not:
+            sequenceExists:
+              sequenceName: media_id_seq
+      changes:
+        - createSequence:
+            sequenceName: media_id_seq
+        - sqlFile:
+            path: ../sql/008-create-medias-table.sql
+            relativeToChangelogFile: true
+
+        - sql:
+            sql: ALTER TABLE medias OWNER TO ${schema.owner}
