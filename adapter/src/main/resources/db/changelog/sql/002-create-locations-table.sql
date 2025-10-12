@@ -7,6 +7,3 @@ CREATE TABLE IF NOT EXISTS locations (
                                          lng          DOUBLE PRECISION NOT NULL,
                                          address_text VARCHAR(500)
     );
-
-CREATE SEQUENCE location_id_seq;
-

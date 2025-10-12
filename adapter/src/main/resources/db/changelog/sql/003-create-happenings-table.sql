@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS happenings (
     CONSTRAINT FK_HAPPENING_LOCATION FOREIGN KEY (location_id) REFERENCES locations (id)
     );
 
-CREATE SEQUENCE happening_id_seq;
+-- CREATE SEQUENCE happening_id_seq;
 

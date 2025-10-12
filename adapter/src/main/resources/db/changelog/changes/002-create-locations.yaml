@@ -2,7 +2,13 @@ databaseChangeLog:
   - changeSet:
       id: create-location
       author: babayaga
+      preConditions:
+        - not:
+            sequenceExists:
+              sequenceName: location_id_seq
       changes:
+        - createSequence:
+            sequenceName: location_id_seq
         - sqlFile:
             path: ../sql/002-create-locations-table.sql
             relativeToChangelogFile: true

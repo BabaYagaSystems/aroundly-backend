@@ -2,7 +2,13 @@ databaseChangeLog:
   - changeSet:
       id: create-reactions
       author: babayaga
+      preConditions:
+        - not:
+            sequenceExists:
+              sequenceName: reaction_id_seq
       changes:
+        - createSequence:
+            sequenceName: reaction_id_seq
         - sqlFile:
             path: ../sql/007-create-reactions-table.sql
             relativeToChangelogFile: true

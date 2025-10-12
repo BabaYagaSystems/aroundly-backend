@@ -8,6 +8,3 @@ CREATE TABLE IF NOT EXISTS events (
                                       end_time     TIMESTAMP,
                                       CONSTRAINT FK_EVENT_HAPPENING FOREIGN KEY (happening_id) REFERENCES happenings (id)
     );
-
-CREATE SEQUENCE event_id_seq;
-

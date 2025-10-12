@@ -11,5 +11,3 @@ CREATE TABLE IF NOT EXISTS medias (
                                          happening_id BIGINT NOT NULL,
                                          CONSTRAINT FK_MEDIA_HAPPENING FOREIGN KEY (happening_id) REFERENCES happenings (id)
     );
-
-CREATE SEQUENCE media_id_seq;

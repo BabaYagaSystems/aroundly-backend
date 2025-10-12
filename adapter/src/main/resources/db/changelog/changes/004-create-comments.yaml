@@ -2,7 +2,13 @@ databaseChangeLog:
   - changeSet:
       id: create-comments
       author: babayaga
+      preConditions:
+        - not:
+            sequenceExists:
+              sequenceName: comment_id_seq
       changes:
+        - createSequence:
+            sequenceName: comment_id_seq
         - sqlFile:
             path: ../sql/004-create-comments-table.sql
             relativeToChangelogFile: true

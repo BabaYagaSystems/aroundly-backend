@@ -10,6 +10,3 @@ CREATE TABLE IF NOT EXISTS comments (
                                         CONSTRAINT FK_COMMENT_HAPPENING FOREIGN KEY (happening_id) REFERENCES happenings (id),
     CONSTRAINT FK_COMMENT_CLIENT FOREIGN KEY (client_id) REFERENCES clients (id)
     );
-
-CREATE SEQUENCE comment_id_seq;
-

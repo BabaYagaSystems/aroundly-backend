@@ -2,7 +2,13 @@ databaseChangeLog:
   - changeSet:
       id: create-events
       author: babayaga
+      preConditions:
+        - not:
+            sequenceExists:
+              sequenceName: event_id_seq
       changes:
+        - createSequence:
+            sequenceName: event_id_seq
         - sqlFile:
             path: ../sql/005-create-events-table.sql
             relativeToChangelogFile: true

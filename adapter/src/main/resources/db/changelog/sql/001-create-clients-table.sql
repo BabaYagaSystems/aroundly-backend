@@ -7,6 +7,3 @@ CREATE TABLE IF NOT EXISTS clients (
     fcm_token   VARCHAR(255),
     range_km    INT
     );
-
-CREATE SEQUENCE client_id_seq;
--- ALTER SEQUENCE client_id_seq OWNER TO ${schema.owner};
