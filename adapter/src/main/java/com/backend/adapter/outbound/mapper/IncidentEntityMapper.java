@@ -5,9 +5,7 @@ import com.backend.domain.happening.Incident;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring",
-        uses = {HappeningEntityMapper.class
-        })
+@Mapper(componentModel = "spring")
 public interface IncidentEntityMapper {
 
     @Mapping(target = "timePosted", ignore = true)

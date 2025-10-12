@@ -40,13 +40,11 @@ class MinioObjectStorageAdapterTest {
   private MinioClient minioClient;
   private final static String BUCKET = "test-bucket";
   private MinioObjectStorageAdapter adapter;
-  private MediaPersistence persistence;
 
   @BeforeEach
   void setUp() {
     minioClient = mock(MinioClient.class);
-    persistence = mock(MediaPersistence.class);
-    adapter = new MinioObjectStorageAdapter(minioClient, BUCKET, persistence);
+    adapter = new MinioObjectStorageAdapter(minioClient, BUCKET);
   }
 
   @Test

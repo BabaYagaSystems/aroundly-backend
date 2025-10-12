@@ -28,6 +28,7 @@ public interface MediaEntityMapper {
    * @param media the domain object
    * @return the mapped persistence entity
    */
+  @Mapping(target = "happeningEntity", ignore = true)
   @Mapping(target = "key", source = "filename")
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "createdAt", ignore = true)
