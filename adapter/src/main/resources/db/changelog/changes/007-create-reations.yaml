@@ -3,10 +3,10 @@ databaseChangeLog:
       id: create-reactions
       author: babayaga
       preConditions:
+        - onFail: WARN
+        - onError: WARN
         - not:
             sequenceExists:
-              onFail: WARN
-              onError: WARN
               sequenceName: reaction_id_seq
       changes:
         - createSequence:

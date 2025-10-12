@@ -3,10 +3,10 @@ databaseChangeLog:
       id: create-medias
       author: babayaga
       preConditions:
+        - onFail: WARN
+        - onError: WARN
         - not:
             sequenceExists:
-              onFail: WARN
-              onError: WARN
               sequenceName: media_id_seq
       changes:
         - createSequence:

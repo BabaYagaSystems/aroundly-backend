@@ -3,10 +3,10 @@ databaseChangeLog:
       id: create-location
       author: babayaga
       preConditions:
+        - onFail: WARN
+        - onError: WARN
         - not:
             sequenceExists:
-              onFail: WARN
-              onError: WARN
               sequenceName: location_id_seq
       changes:
         - createSequence:

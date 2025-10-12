@@ -3,10 +3,10 @@ databaseChangeLog:
       id: create-incidents
       author: babayaga
       preConditions:
+        - onFail: WARN
+        - onError: WARN
         - not:
             sequenceExists:
-              onFail: WARN
-              onError: WARN
               sequenceName: incident_id_seq
       changes:
         - createSequence:
