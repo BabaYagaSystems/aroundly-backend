@@ -1,7 +1,6 @@
 package com.backend.services;
 
 import com.backend.domain.actor.ActorId;
-import com.backend.domain.happening.Happening;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
@@ -140,10 +139,6 @@ public class IncidentService implements IncidentUseCase {
       final LocationId locationId = location.id();
       final Set<Media> uploadedMedia = objectStoragePort.uploadAll(media);
 
-
-      /**
-       * MODIFIED FOR DB
-       */
       Incident incident = Incident.builder()
         .actorId(actorId)
         .locationId(locationId)
@@ -154,11 +149,12 @@ public class IncidentService implements IncidentUseCase {
         .expiresAt(Instant.now().plus(Incident.TTL))
         .build();
 
-            return incidentRepository.save(incident);
+      return incidentRepository.save(incident);
+
         } catch (ActorNotFoundException | LocationNotFoundException e) {
-            throw e;
+          throw e;
         } catch (Exception e) {
-            throw new ValidationException("Failed to create incident", e);
+          throw new ValidationException("Failed to create incident", e);
         }
     }
 
