@@ -6,141 +6,125 @@ import com.backend.adapter.outbound.entity.LocationEntity;
 import com.backend.adapter.outbound.entity.MediaEntity;
 import com.backend.adapter.outbound.mapper.MediaEntityMapper;
 import com.backend.adapter.outbound.repo.*;
+import com.backend.domain.actor.ActorId;
 import com.backend.domain.happening.Incident;
-import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
-
+import com.backend.domain.reactions.EngagementStats;
 import com.backend.port.outbound.repo.IncidentRepository;
-import com.backend.port.outbound.repo.LocationRepository;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Repository
 public class IncidentPersistence implements IncidentRepository {
 
-    private final IncidentPersistenceRepository incidentPersistenceRepository; //For DB
-    private final HappeningPersistenceRepository happeningPersistenceRepository;
-    private final LocationRepository locationRepository;
+  private final IncidentPersistenceRepository incidentPersistenceRepository;
+  private final HappeningPersistenceRepository happeningPersistenceRepository;
+  private final LocationPersistenceRepository locationPersistenceRepository;
 
-    private final MediaEntityMapper mediaEntityMapper;
-    
-    private final Map<Long, Incident> storage = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(1);
-    private final LocationPersistenceRepository locationPersistenceRepository;
+  private final MediaEntityMapper mediaEntityMapper;
 
-
-    /**
+  /**
      * Since the Happening is abstract it needs to be created by each child entity that implements it
      * Also it needs to be mapped manually since MapStruct is not working with abstract classes
      * */
     @Override
     public Incident save(Incident incident) {
-        long id = idGenerator.getAndIncrement();
-        storage.put(id, incident);
+      IncidentEntity incidentEntity = toEntityIncident(incident);
+      HappeningEntity happeningEntity = incidentEntity.getHappening();
 
-        /// THIS I THINK WILL NEED TO BE MOVED TO ONE OF THE LOCATION REPOSITORY
-        LocationEntity locationEntity = locationPersistenceRepository
-                .findById(incident.locationId().value())
-                .orElseThrow(() -> new IllegalStateException("Location not found"));
+      for (MediaEntity mediaEntity : happeningEntity.getMedia()) {
+          mediaEntity.setHappeningEntity(happeningEntity);
+      }
 
-        Set<MediaEntity> mediaEntities = incident.media().stream()
-            .map(mediaEntityMapper::toEntity)
-            .collect(Collectors.toSet());
+      happeningPersistenceRepository.save(happeningEntity);
+      incidentPersistenceRepository.save(incidentEntity);
 
-        HappeningEntity happeningEntity = HappeningEntity.builder()
-                .title(incident.getTitle())
-                .description(incident.getDescription())
-                .media(mediaEntities)
-                .createdAt(LocalDateTime.now())
-                .location(locationEntity)
-                .build();
-
-        for (MediaEntity mediaEntity : mediaEntities) {
-            mediaEntity.setHappeningEntity(happeningEntity);
-        }
-
-        happeningPersistenceRepository.save(happeningEntity);
-
-        /**
-         * OLD VERSION USING THE MAPPER
-         * BUT THE HAPPENING WILL NOT BE AUTOMATICALLY SET BECAUSE IT IS ABSTRACT
-         * */
-//        IncidentEntity incidentEntity = incidentEntityMapper.toIncidentEntity(incident); //For DB
-
-        /// THIS BUILDER MAY NEED TO BE TRANSFERRED
-        IncidentEntity incidentEntity = IncidentEntity.builder()
-                .happening(happeningEntity)
-                .timePosted(LocalDateTime.now())
-                .range(1000) /// WHERE FROM DO WE NEED TO GET THIS VALUE
-                .confirms(incident.getEngagementStats().confirms())
-                .denies(incident.getEngagementStats().denies())
-                .build();
-
-        incidentPersistenceRepository.save(incidentEntity); //FOr DB
-
-        return incident;
+      return incident;
     }
 
     @Override
     public Optional<Incident> findById(long id) {
-        return Optional.ofNullable(storage.get(id));
+        IncidentEntity incidentEntity = incidentPersistenceRepository.findById(id)
+            .orElseThrow(() -> new IllegalStateException("Location not found"));
+
+        return Optional.of(toDomainIncident(incidentEntity));
     }
 
     @Override
     public boolean existsById(long happeningId) {
-      return storage.get(happeningId) != null;
+      return incidentPersistenceRepository.existsById(happeningId);
     }
 
     @Override
     public List<Incident> findAllInGivenRange(double lat0, double lon0, double radiusMeters) {
-        final double radiusKm = radiusMeters / 1000.0;
 
-        return storage.values().stream()
-            .filter(Objects::nonNull)
-            .filter(i -> {
-                LocationId locationId = i.locationId();
-                Location location = locationRepository.findById(locationId.value());
-                if (location == null) return false;
+        List<IncidentEntity> incidentEntities = incidentPersistenceRepository.findAllInGivenRange(lat0, lon0, radiusMeters);
 
-                double lat = location.latitude();
-                double lon = location.longitude();
-
-                return haversineKm(lat0, lon0, lat, lon) <= radiusKm;
-            })
-            .toList();
+      return incidentEntities.stream()
+          .map(this::toDomainIncident)
+          .toList();
     }
 
-    private static double haversineKm(double lat1, double lon1, double lat2, double lon2) {
-        final double R = 6371.0; // km
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2)
-            + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-            * Math.sin(dLon/2) * Math.sin(dLon/2);
-        return 2 * R * Math.asin(Math.sqrt(a));
+    private IncidentEntity toEntityIncident(Incident incident) {
+      LocationEntity locationEntity = locationPersistenceRepository
+          .findById(incident.locationId().value())
+          .orElseThrow(() -> new IllegalStateException("Location not found"));
+
+      Set<MediaEntity> mediaEntities = incident.media().stream()
+          .map(mediaEntityMapper::toEntity)
+          .collect(Collectors.toSet());
+
+      HappeningEntity happeningEntity = HappeningEntity.builder()
+          .title(incident.getTitle())
+          .description(incident.getDescription())
+          .media(mediaEntities)
+          .createdAt(LocalDateTime.now())
+          .location(locationEntity)
+          .build();
+
+      return IncidentEntity.builder()
+          .happening(happeningEntity)
+          .timePosted(LocalDateTime.now())
+          .range(1000) /// WHERE FROM DO WE NEED TO GET THIS VALUE
+          .confirms(incident.getEngagementStats().confirms())
+          .denies(incident.getEngagementStats().denies())
+          .build();
     }
+
+    private Incident toDomainIncident(IncidentEntity entity) {
+        HappeningEntity happening = entity.getHappening();
+        LocationEntity location = happening.getLocation();
+
+        return Incident.builder()
+            .actorId(new ActorId("abc"))
+            .locationId(new LocationId(location.getId()))
+            .media(happening.getMedia().stream()
+                .map(mediaEntityMapper::toDomain)
+                .collect(Collectors.toSet()))
+            .title(happening.getTitle())
+            .description(happening.getDescription())
+            .engagementStats(new EngagementStats(
+                entity.getConfirms(),
+                entity.getDenies(),
+                entity.getDenies()))
+            .build();
+        }
 
     @Override
     public void deleteById(long id) {
-        storage.remove(id);
+        incidentPersistenceRepository.deleteById(id);
     }
 
     @Override
     public List<Incident> findByUserId(String userId) {
-        return storage.values().stream()
-                .filter(Objects::nonNull)
-                .toList();
+        return List.of();
     }
 }
