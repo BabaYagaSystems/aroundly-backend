@@ -12,6 +12,25 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface IncidentPersistenceRepository extends JpaRepository<IncidentEntity, Long> {
 
+  @Query(value = """
+    SELECT i.*, 
+           ST_Distance(
+               ST_SetSRID(ST_MakePoint(l.lng, l.lat), 4326)::geography,
+               ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography
+           ) as distance_meters
+    FROM incidents i
+    JOIN happenings h ON h.id = i.happening_id
+    JOIN locations l ON l.id = h.location_id
+    WHERE ST_DWithin(
+           ST_SetSRID(ST_MakePoint(l.lng, l.lat), 4326)::geography,
+           ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,
+           :radiusMeters
+    )
+    ORDER BY distance_meters ASC
+    LIMIT 100
+    """, nativeQuery = true)
+  List<IncidentEntity> findAllInGivenRange(
+      @Param("lat") double lat,
+      @Param("lon") double lon,
+      @Param("radiusMeters") double radiusMeters);
 }
-
-

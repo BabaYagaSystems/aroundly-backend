@@ -1,7 +1,6 @@
 package com.backend.services;
 
 import com.backend.domain.actor.ActorId;
-import com.backend.domain.happening.Happening;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
@@ -79,7 +78,7 @@ public class IncidentService implements IncidentUseCase {
      * @throws IllegalArgumentException if actorId is null or empty
      */
     @Override
-    public List<Happening> findByActorId(String actorId) {
+    public List<Incident> findByActorId(String actorId) {
         if (actorId == null || actorId.trim().isEmpty())
             throw new IllegalArgumentException("Actor ID cannot be null or empty");
 
@@ -94,11 +93,11 @@ public class IncidentService implements IncidentUseCase {
      * @throws IncidentNotFoundException if not found
      */
     @Override
-    public Happening findById(long id) throws IncidentNotFoundException {
+    public Incident findById(long id) throws IncidentNotFoundException {
         if (id <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         return incidentRepository.findById(id)
-                .orElseThrow(() -> new IncidentNotFoundException("Incident not found with ID: " + id));
+            .orElseThrow(() -> new IncidentNotFoundException("Incident not found with ID: " + id));
     }
 
     /**
@@ -140,10 +139,6 @@ public class IncidentService implements IncidentUseCase {
       final LocationId locationId = location.id();
       final Set<Media> uploadedMedia = objectStoragePort.uploadAll(media);
 
-
-      /**
-       * MODIFIED FOR DB
-       */
       Incident incident = Incident.builder()
         .actorId(actorId)
         .locationId(locationId)
@@ -154,11 +149,12 @@ public class IncidentService implements IncidentUseCase {
         .expiresAt(Instant.now().plus(Incident.TTL))
         .build();
 
-            return incidentRepository.save(incident);
+      return incidentRepository.save(incident);
+
         } catch (ActorNotFoundException | LocationNotFoundException e) {
-            throw e;
+          throw e;
         } catch (Exception e) {
-            throw new ValidationException("Failed to create incident", e);
+          throw new ValidationException("Failed to create incident", e);
         }
     }
 
@@ -177,24 +173,24 @@ public class IncidentService implements IncidentUseCase {
     public Incident update(long id, CreateIncidentCommand createIncidentCommand)
             throws IncidentNotFoundException, ValidationException {
 
-        if (id <= 0) throw new IllegalArgumentException("Incident ID must be positive");
-        validateCreateIncidentCommand(createIncidentCommand);
+      if (id <= 0) throw new IllegalArgumentException("Incident ID must be positive");
+      validateCreateIncidentCommand(createIncidentCommand);
 
-    try {
-      final Incident existingIncident = (Incident) findById(id);
-      final String updatedTitle = createIncidentCommand.title();
-      final String updatedDescription = createIncidentCommand.description();
-      final Set<UploadMediaCommand> updatedMedia = createIncidentCommand.media();
+      try {
+        final Incident existingIncident = findById(id);
+        final String updatedTitle = createIncidentCommand.title();
+        final String updatedDescription = createIncidentCommand.description();
+        final Set<UploadMediaCommand> updatedMedia = createIncidentCommand.media();
 
-      final Set<Media> uploadUpdatedMedia = objectStoragePort.uploadAll(updatedMedia);
+        final Set<Media> uploadUpdatedMedia = objectStoragePort.uploadAll(updatedMedia);
 
-      Incident updatedExistingOldIncident = existingIncident.toBuilder()
-        .title(updatedTitle)
-        .description(updatedDescription)
-        .media(uploadUpdatedMedia)
-        .build();
+        Incident updatedExistingOldIncident = existingIncident.toBuilder()
+          .title(updatedTitle)
+          .description(updatedDescription)
+          .media(uploadUpdatedMedia)
+          .build();
 
-            return incidentRepository.save(updatedExistingOldIncident);
+        return incidentRepository.save(updatedExistingOldIncident);
 
         } catch (IncidentNotFoundException e) {
             throw e;
@@ -220,7 +216,7 @@ public class IncidentService implements IncidentUseCase {
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         try {
-            Incident incident = castToIncident(findById(incidentId));
+            Incident incident = findById(incidentId);
             incident.confirmIncident();
 
             return incidentRepository.save(incident);
@@ -251,7 +247,7 @@ public class IncidentService implements IncidentUseCase {
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         try {
-            Incident incident = castToIncident(findById(incidentId));
+            Incident incident = findById(incidentId);
             incident.denyIncident();
 
             return incidentRepository.save(incident);
@@ -280,7 +276,7 @@ public class IncidentService implements IncidentUseCase {
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         try {
-            Incident incident = castToIncident(findById(incidentId));
+            Incident incident = findById(incidentId);
             if (incident.isDeleted()) {
                 incidentRepository.deleteById(incidentId);
             } else {
@@ -332,12 +328,5 @@ public class IncidentService implements IncidentUseCase {
         if (command.description() != null && command.description().length() > 1000) {
             throw new ValidationException("Incident description cannot exceed 1000 characters");
         }
-    }
-
-    private Incident castToIncident(Happening happening) throws ClassCastException {
-        if (!(happening instanceof Incident)) {
-            throw new ClassCastException("Happening is not an instance of Incident");
-        }
-        return (Incident) happening;
     }
 }
