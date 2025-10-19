@@ -10,7 +10,7 @@ import java.util.List;
  * Defines use cases specific to {@link Incident} management,
  * extending the general {@link HappeningUseCase}.
  */
-public interface IncidentUseCase extends HappeningUseCase<Incident> {
+public interface IncidentUseCase extends HappeningUseCase {
 
     /**
      * Finds all incidents within a given geographic radius.
