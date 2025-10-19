@@ -7,6 +7,7 @@ import com.backend.domain.location.Location;
 import com.backend.port.outbound.repo.LocationRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 /**
  * Assembles incident-related DTOs by enriching them

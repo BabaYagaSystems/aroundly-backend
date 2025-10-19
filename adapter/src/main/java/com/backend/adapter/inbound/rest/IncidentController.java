@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.criteria.CriteriaBuilder.In;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import java.util.Collections;
@@ -231,8 +230,10 @@ public class IncidentController {
       @PathVariable String id) {
 
     try {
-      List<Incident> incidents = incidentUseCase.findByActorId(id);
+      List<Happening> incidents = incidentUseCase.findByActorId(id);
       List<IncidentPreviewResponseDto> incidentPreviewResponseDtos = incidents.stream()
+          .filter(happening -> happening instanceof Incident)
+          .map(happening -> (Incident) happening)
           .map(incidentPreviewDtoAssembler::toPreviewDto)
           .toList();
 

@@ -7,7 +7,7 @@ import java.util.List;
  * Defines use cases for managing {@link Happening} objects,
  * including retrieval and deletion.
  */
-public interface HappeningUseCase<T extends Happening> {
+public interface HappeningUseCase {
 
   /**
    * Finds a Happening by its unique identifier.
@@ -15,7 +15,7 @@ public interface HappeningUseCase<T extends Happening> {
    * @param happeningId the identifier of the Happening
    * @return the Happening with the given id
    */
-  T findById(long happeningId);
+  Happening findById(long happeningId);
 
   /**
    * Deletes a Happening by its unique identifier.
@@ -30,5 +30,5 @@ public interface HappeningUseCase<T extends Happening> {
    * @param actorId the identifier of the actor
    * @return the list of Happenings by the actor
    */
-  List<T> findByActorId(String actorId);
+  List<Happening> findByActorId(String actorId);
 }

@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Repository interface for managing incidents in the data store.
  */
-public interface IncidentRepository extends HappeningRepository<Incident> {
+public interface IncidentRepository extends HappeningRepository {
 
     /**
      * Saves a new incident or updates an existing one.

@@ -14,11 +14,15 @@ import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
 @Repository
-public class LocationPersistence implements LocationRepository {
+public class FakeLocationPersistenceRepository implements LocationRepository {
 
   private final LocationPersistenceRepository locationPersistenceRepository;
   private final LocationEntityMapper locationEntityMapper;
   private final Map<Long, Location> storage = new ConcurrentHashMap<>();
+
+  /**
+   *        QUESTION TO ASK : WHY CUSTOM NEXT ID GENERATOR NEEDED???
+   * */
 
   @Override
   public Location save(Location location) {
