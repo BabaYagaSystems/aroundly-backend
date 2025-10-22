@@ -12,5 +12,5 @@ public interface Reactable {
    *
    * @return the sentiment engagement
    */
-  SentimentEngagement sentimentEngagement();
+  SentimentEngagement getSentimentEngagement();
 }

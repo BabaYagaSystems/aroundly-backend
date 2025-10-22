@@ -17,7 +17,7 @@ public interface Expirable extends TimeStamped {
    *
    * @return the expiration time, 30 minutes after creation
    */
-  default Instant expiresAt() {
+  default Instant getExpiresAt() {
     return createdAt().plus(TTL);
   }
 
@@ -27,7 +27,7 @@ public interface Expirable extends TimeStamped {
    * @return true if expired, false otherwise
    */
   default boolean isExpired() {
-    return Instant.now().isAfter(expiresAt());
+    return Instant.now().isAfter(getExpiresAt());
   }
 
   /**
@@ -37,6 +37,6 @@ public interface Expirable extends TimeStamped {
    * @return true if expired, false otherwise
    */
   default boolean isExpired(Clock clock) {
-    return Instant.now(clock).isAfter(expiresAt());
+    return Instant.now(clock).isAfter(getExpiresAt());
   }
 }
