@@ -5,7 +5,6 @@ import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
-import com.backend.domain.reactions.EngagementStats;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CoordinatesCommand;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
@@ -140,13 +139,10 @@ public class IncidentService implements IncidentUseCase {
       final Set<Media> uploadedMedia = objectStoragePort.uploadAll(media);
 
       Incident incident = Incident.builder()
-        .actorId(actorId)
         .locationId(locationId)
         .title(title)
         .description(description)
         .media(uploadedMedia)
-        .engagementStats(new EngagementStats(0, 0, 0))
-        .expiresAt(Instant.now().plus(Incident.TTL))
         .build();
 
       return incidentRepository.save(incident);

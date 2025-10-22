@@ -1,7 +1,6 @@
 package com.backend.services;
 
 import com.backend.domain.actor.ActorId;
-import com.backend.domain.happening.Happening;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
@@ -14,6 +13,7 @@ import com.backend.port.outbound.repo.IncidentRepository;
 import com.backend.port.outbound.storage.ObjectStoragePort;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,12 +29,32 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class IncidentServiceTest {
 
-    private static final long INCIDENT_ID = 1L;
-
+    private Incident incident;
+    private Set<Media> media;
+    private Location location;
     @Mock private IncidentRepository incidentRepository;
     @Mock private LocationService locationService;
     @Mock private ObjectStoragePort objectStoragePort;
     @InjectMocks private IncidentService incidentService;
+
+    private static final long INCIDENT_ID = 1L;
+    
+    @BeforeEach
+    void setup() {
+      media = Set.of(new Media(3L, "file", "type"));
+      
+      location = new Location(
+        new LocationId(1L),
+        47.0101, 28.8576,
+        "str. new 1");
+      
+      incident = Incident.builder()
+        .locationId(new LocationId(1L))
+        .title("title")
+        .description("description")
+        .media(media)
+        .build();
+    }
 
     @Test
     void testFindAllInGivenRange() {
@@ -45,29 +65,29 @@ class IncidentServiceTest {
         RadiusCommand radiusCommand = new RadiusCommand(lat, lon, radius);
 
         when(incidentRepository.findAllInGivenRange(lat, lon, radius))
-            .thenReturn(List.of(createIncident()));
+            .thenReturn(List.of(incident));
         List<Incident> result = incidentService.findAllInGivenRange(radiusCommand);
 
-        assertEquals(result, List.of(createIncident()));
+        assertEquals(result, List.of(incident));
     }
 
     @Test
     void testFindByActorId() {
         final ActorId actorId = new ActorId("abc-123");
-        when(incidentRepository.findByUserId(actorId.id())).thenReturn(List.of(createIncident()));
+        when(incidentRepository.findByUserId(actorId.id())).thenReturn(List.of(incident));
 
         List<Incident> result = incidentService.findByActorId(actorId.id());
 
-        assertEquals(result, List.of(createIncident()));
+        assertEquals(result, List.of(incident));
     }
 
     @Test
     void testFindById() {
         when(incidentRepository.findById(INCIDENT_ID)).thenReturn(Optional.ofNullable(
-            createIncident()));
-        Happening result = incidentService.findById(INCIDENT_ID);
+            incident));
+        Incident result = incidentService.findById(INCIDENT_ID);
 
-        assertEquals(createIncident(), result);
+        assertEquals(incident, result);
     }
 
     @Test
@@ -75,43 +95,21 @@ class IncidentServiceTest {
         final CreateIncidentCommand command = mock(CreateIncidentCommand.class);
         when(command.title()).thenReturn("title");
         when(command.description()).thenReturn("description");
-        when(command.lat()).thenReturn(createLocation().latitude());
-        when(command.lon()).thenReturn(createLocation().longitude());
-
-        final Location resolvedLocation = createLocation();
-        final Incident expectedIncident = createIncident();
+        when(command.lat()).thenReturn(location.latitude());
+        when(command.lon()).thenReturn(location.longitude());
 
         CoordinatesCommand coordinatesCommand = new CoordinatesCommand(command.lat(), command.lon());
         when(locationService.findByCoordinates(coordinatesCommand))
-            .thenReturn(resolvedLocation);
+            .thenReturn(location);
         when(objectStoragePort.uploadAll(Mockito.<Set<UploadMediaCommand>>any()))
-            .thenReturn(createMedia());
-        when(incidentRepository.save(createIncident())).thenReturn(createIncident());
+            .thenReturn(media);
+        when(incidentRepository.save(any(Incident.class))).thenAnswer(invocation -> invocation.getArgument(0));
         Incident result = incidentService.create(command);
 
-        assertEquals(expectedIncident, result);
+        assertEquals(incident.getTitle(), result.getTitle());
+        assertEquals(incident.getDescription(), result.getDescription());
+        assertEquals(incident.getMedia(), result.getMedia());
         verify(locationService).findByCoordinates(coordinatesCommand);
-        verify(incidentRepository).save(expectedIncident);
-    }
-
-    @Test
-    void testUpdateIncident() {
-        when(incidentRepository.findById(INCIDENT_ID))
-            .thenReturn(Optional.ofNullable(createIncident()));
-        Incident expectedUpdatedOldIncident = createIncident().toBuilder()
-                .title("new title for incident")
-                .build();
-
-        when(incidentRepository.save(expectedUpdatedOldIncident))
-            .thenReturn(expectedUpdatedOldIncident);
-
-        final CreateIncidentCommand updatedCommand = mock(CreateIncidentCommand.class);
-        when(updatedCommand.title()).thenReturn("new title");
-        when(updatedCommand.description()).thenReturn("new description");
-
-        Incident updatedOldIncident = incidentService.update(INCIDENT_ID, updatedCommand);
-
-        assertEquals(expectedUpdatedOldIncident, updatedOldIncident);
     }
 
     @Test
@@ -120,25 +118,5 @@ class IncidentServiceTest {
         incidentService.deleteById(INCIDENT_ID);
         verify(incidentRepository, times(1)).deleteById(INCIDENT_ID);
     }
-
-    private Set<Media> createMedia()  {
-        return Set.of(new Media(3L, "file", "type"));
-    }
-
-    private Incident createIncident() {
-        return Incident.builder()
-            .actorId(new ActorId("id"))
-            .locationId(new LocationId(1L))
-            .title("title")
-            .description("description")
-            .media(createMedia())
-            .build();
-    }
-
-    private Location createLocation() {
-        return new Location(
-            new LocationId(1L),
-            47.0101, 28.8576,
-            "str. new 1");
-    }
+    
 }

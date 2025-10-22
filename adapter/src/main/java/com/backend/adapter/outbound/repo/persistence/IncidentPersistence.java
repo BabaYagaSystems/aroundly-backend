@@ -1,6 +1,5 @@
 package com.backend.adapter.outbound.repo.persistence;
 
-import com.backend.adapter.outbound.entity.HappeningEntity;
 import com.backend.adapter.outbound.entity.IncidentEntity;
 import com.backend.adapter.outbound.entity.LocationEntity;
 import com.backend.adapter.outbound.entity.MediaEntity;
@@ -11,7 +10,6 @@ import com.backend.domain.happening.Incident;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.reactions.EngagementStats;
 import com.backend.port.outbound.repo.IncidentRepository;
-import java.time.LocalDateTime;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -26,7 +24,6 @@ import java.util.stream.Collectors;
 public class IncidentPersistence implements IncidentRepository {
 
   private final IncidentPersistenceRepository incidentPersistenceRepository;
-  private final HappeningPersistenceRepository happeningPersistenceRepository;
   private final LocationPersistenceRepository locationPersistenceRepository;
 
   private final MediaEntityMapper mediaEntityMapper;
@@ -38,13 +35,11 @@ public class IncidentPersistence implements IncidentRepository {
     @Override
     public Incident save(Incident incident) {
       IncidentEntity incidentEntity = toEntityIncident(incident);
-      HappeningEntity happeningEntity = incidentEntity.getHappening();
 
-      for (MediaEntity mediaEntity : happeningEntity.getMedia()) {
-          mediaEntity.setHappeningEntity(happeningEntity);
-      }
+//      for (MediaEntity mediaEntity : happeningEntity.getMedia()) {
+//          mediaEntity.setHappeningEntity(happeningEntity);
+//      }
 
-      happeningPersistenceRepository.save(happeningEntity);
       incidentPersistenceRepository.save(incidentEntity);
 
       return incident;
@@ -75,47 +70,44 @@ public class IncidentPersistence implements IncidentRepository {
 
     private IncidentEntity toEntityIncident(Incident incident) {
       LocationEntity locationEntity = locationPersistenceRepository
-          .findById(incident.locationId().value())
-          .orElseThrow(() -> new IllegalStateException("Location not found"));
+        .findById(incident.getLocationId().value())
+        .orElseThrow(() -> new IllegalStateException("Location not found"));
 
-      Set<MediaEntity> mediaEntities = incident.media().stream()
+//      Set<MediaEntity> mediaEntities = incident.getMedia().stream()
+//        .map(mediaEntityMapper::toEntity)
+//        .collect(Collectors.toSet());
+
+      IncidentEntity incidentEntity =  IncidentEntity.builder()
+        .title(incident.getTitle())
+        .description(incident.getDescription())
+        .location(locationEntity)
+        .timePosted(incident.createdAt())
+        .range(1000) /// WHERE FROM DO WE NEED TO GET THIS VALUE
+        .confirms(incident.getEngagementStats().confirms())
+        .denies(incident.getEngagementStats().denies())
+        .build();
+
+      incident.getMedia().stream()
           .map(mediaEntityMapper::toEntity)
-          .collect(Collectors.toSet());
+          .forEach(incidentEntity::addMedia);
 
-      HappeningEntity happeningEntity = HappeningEntity.builder()
-          .title(incident.getTitle())
-          .description(incident.getDescription())
-          .media(mediaEntities)
-          .createdAt(LocalDateTime.now())
-          .location(locationEntity)
-          .build();
-
-      return IncidentEntity.builder()
-          .happening(happeningEntity)
-          .timePosted(LocalDateTime.now())
-          .range(1000) /// WHERE FROM DO WE NEED TO GET THIS VALUE
-          .confirms(incident.getEngagementStats().confirms())
-          .denies(incident.getEngagementStats().denies())
-          .build();
+      return incidentEntity;
     }
 
     private Incident toDomainIncident(IncidentEntity entity) {
-        HappeningEntity happening = entity.getHappening();
-        LocationEntity location = happening.getLocation();
-
-        return Incident.builder()
-            .actorId(new ActorId("abc"))
-            .locationId(new LocationId(location.getId()))
-            .media(happening.getMedia().stream()
-                .map(mediaEntityMapper::toDomain)
-                .collect(Collectors.toSet()))
-            .title(happening.getTitle())
-            .description(happening.getDescription())
-            .engagementStats(new EngagementStats(
-                entity.getConfirms(),
-                entity.getDenies(),
-                entity.getDenies()))
-            .build();
+      return Incident.builder()
+        .actorId(new ActorId("abc"))
+        .locationId(new LocationId(entity.getLocation().getId()))
+        .media(entity.getMedia().stream()
+            .map(mediaEntityMapper::toDomain)
+            .collect(Collectors.toSet()))
+        .title(entity.getTitle())
+        .description(entity.getDescription())
+        .engagementStats(new EngagementStats(
+            entity.getConfirms(),
+            entity.getDenies(),
+            entity.getDenies()))
+        .build();
         }
 
     @Override

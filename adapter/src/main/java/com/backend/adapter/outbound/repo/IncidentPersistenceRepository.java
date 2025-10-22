@@ -19,8 +19,7 @@ public interface IncidentPersistenceRepository extends JpaRepository<IncidentEnt
                ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography
            ) as distance_meters
     FROM incidents i
-    JOIN happenings h ON h.id = i.happening_id
-    JOIN locations l ON l.id = h.location_id
+    JOIN locations l ON l.id = i.location_id
     WHERE ST_DWithin(
            ST_SetSRID(ST_MakePoint(l.lng, l.lat), 4326)::geography,
            ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,

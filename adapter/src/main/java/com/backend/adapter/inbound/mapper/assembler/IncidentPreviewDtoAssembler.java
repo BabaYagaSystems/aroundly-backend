@@ -33,12 +33,12 @@ public class IncidentPreviewDtoAssembler {
   public IncidentPreviewResponseDto toPreviewDto(Incident incident) {
     IncidentPreviewResponseDto dto = mapper.toIncidentPreviewResponseDto(incident);
 
-    Set<MediaDto> previewMedia = mediaPreviewFactory.build(incident.media());
+    Set<MediaDto> previewMedia = mediaPreviewFactory.build(incident.getMedia());
 
     IncidentPreviewResponseDto.IncidentPreviewResponseDtoBuilder builder =
         dto.toBuilder().media(previewMedia);
 
-    Location location = locationRepository.findById(incident.locationId().value());
+    Location location = locationRepository.findById(incident.getLocationId().value());
     if (location != null) {
       builder.lat(location.latitude()).lon(location.longitude());
     }

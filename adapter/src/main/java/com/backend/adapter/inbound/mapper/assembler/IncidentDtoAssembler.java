@@ -27,17 +27,26 @@ public class IncidentDtoAssembler {
    * @return a fully populated detailed response DTO
    */
   public IncidentDetailedResponseDto toDetailedDto(Incident incident) {
-    IncidentDetailedResponseDto dto = mapper.toIncidentDetailedResponseDto(incident);
+//    IncidentDetailedResponseDto dto = mapper.toIncidentDetailedResponseDto(incident);
 
-    Location location = locationRepository.findById(incident.locationId().value());
+    Location location = locationRepository.findById(incident.getLocationId().value());
     double lat = location.latitude();
     double lon = location.longitude();
     String address = location.address();
 
-    return dto.toBuilder()
+    return IncidentDetailedResponseDto.builder()
+        .title(incident.getTitle())
+        .description(incident.getDescription())
+        .media(incident.getMedia())
+        .confirm(incident.getEngagementStats().confirms())
+        .deny(incident.getEngagementStats().denies())
+        .consecutiveDenies(incident.getEngagementStats().consecutiveDenies())
+        .like(incident.getSentimentEngagement().likes())
+        .dislike(incident.getSentimentEngagement().dislikes())
+        .address(address)
         .lat(lat)
         .lon(lon)
-        .address(address)
         .build();
+
   }
 }
