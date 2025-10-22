@@ -41,6 +41,7 @@ public class IncidentEntity {
   private double range;
   private int confirms;
   private int denies;
+  private int consecutiveDenies;
 
   public void addMedia(MediaEntity m) {
     media.add(m);

@@ -5,9 +5,7 @@ import com.backend.adapter.outbound.repo.LocationPersistenceRepository;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
 import com.backend.port.outbound.repo.LocationRepository;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -17,16 +15,10 @@ import org.springframework.stereotype.Repository;
 public class LocationPersistence implements LocationRepository {
 
   private final LocationPersistenceRepository locationPersistenceRepository;
-  private final Map<Long, Location> storage = new ConcurrentHashMap<>();
 
   @Override
   public Location save(Location location) {
-    LocationEntity locationEntity = LocationEntity.builder()
-        .lat(location.latitude())
-        .lng(location.longitude())
-        .addressText(location.address())
-        .build();
-//    LocationEntity locationEntity = locationEntityMapper.toLocationEntity(location);
+    LocationEntity locationEntity = toLocationEntity(location);
 
     // If ID is 0 or null, let database generate
     if (location.id().value() == 0L) {
@@ -35,32 +27,40 @@ public class LocationPersistence implements LocationRepository {
 
     LocationEntity savedEntity = locationPersistenceRepository.save(locationEntity);
 
-    // Map back with generated ID
-    Location savedLocation = new Location(
-        new LocationId(savedEntity.getId()),
-        savedEntity.getLat(),
-        savedEntity.getLng(),
-        savedEntity.getAddressText());
-//    Location savedLocation = locationEntityMapper.toLocation(savedEntity);
-    storage.put(savedLocation.id().value(), savedLocation);
-
-    return savedLocation;
+    return toLocation(savedEntity);
   }
 
   @Override
   public Location findById(long id) {
-    return storage.get(id);
+    LocationEntity locationEntity = locationPersistenceRepository.findById(id)
+        .orElseThrow(() -> new IllegalStateException("Location not found"));
+
+    return toLocation(locationEntity);
   }
 
   @Override
   public Optional<Location> findByCoordinate(double latitude, double longitude) {
-    return storage.values().stream()
-        .filter(loc -> loc.latitude() == latitude && loc.longitude() == longitude)
-        .findFirst();
+    return locationPersistenceRepository.findByCoordinate(latitude, longitude);
   }
 
   @Override
   public void deleteById(long id) {
-    storage.remove(id);
+    locationPersistenceRepository.deleteById(id);
+  }
+
+  private LocationEntity toLocationEntity(Location location) {
+    return LocationEntity.builder()
+        .lat(location.latitude())
+        .lng(location.longitude())
+        .addressText(location.address())
+        .build();
+  }
+
+  private Location toLocation(LocationEntity locationEntity) {
+    return new Location(
+        new LocationId(locationEntity.getId()),
+        locationEntity.getLng(),
+        locationEntity.getLat(),
+        locationEntity.getAddressText());
   }
 }

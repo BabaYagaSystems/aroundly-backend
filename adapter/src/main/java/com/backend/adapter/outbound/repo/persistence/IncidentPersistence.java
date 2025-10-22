@@ -2,7 +2,6 @@ package com.backend.adapter.outbound.repo.persistence;
 
 import com.backend.adapter.outbound.entity.IncidentEntity;
 import com.backend.adapter.outbound.entity.LocationEntity;
-import com.backend.adapter.outbound.entity.MediaEntity;
 import com.backend.adapter.outbound.mapper.MediaEntityMapper;
 import com.backend.adapter.outbound.repo.*;
 import com.backend.domain.actor.ActorId;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -36,10 +34,6 @@ public class IncidentPersistence implements IncidentRepository {
     public Incident save(Incident incident) {
       IncidentEntity incidentEntity = toEntityIncident(incident);
 
-//      for (MediaEntity mediaEntity : happeningEntity.getMedia()) {
-//          mediaEntity.setHappeningEntity(happeningEntity);
-//      }
-
       incidentPersistenceRepository.save(incidentEntity);
 
       return incident;
@@ -48,7 +42,7 @@ public class IncidentPersistence implements IncidentRepository {
     @Override
     public Optional<Incident> findById(long id) {
         IncidentEntity incidentEntity = incidentPersistenceRepository.findById(id)
-            .orElseThrow(() -> new IllegalStateException("Location not found"));
+            .orElseThrow(() -> new IllegalStateException("Incident not found"));
 
         return Optional.of(toDomainIncident(incidentEntity));
     }
@@ -72,10 +66,6 @@ public class IncidentPersistence implements IncidentRepository {
       LocationEntity locationEntity = locationPersistenceRepository
         .findById(incident.getLocationId().value())
         .orElseThrow(() -> new IllegalStateException("Location not found"));
-
-//      Set<MediaEntity> mediaEntities = incident.getMedia().stream()
-//        .map(mediaEntityMapper::toEntity)
-//        .collect(Collectors.toSet());
 
       IncidentEntity incidentEntity =  IncidentEntity.builder()
         .title(incident.getTitle())
