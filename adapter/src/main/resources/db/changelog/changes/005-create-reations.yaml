@@ -12,7 +12,7 @@ databaseChangeLog:
         - createSequence:
             sequenceName: reaction_id_seq
         - sqlFile:
-            path: ../sql/007-create-reactions-table.sql
+            path: ../sql/005-create-reactions-table.sql
             relativeToChangelogFile: true
 
         - sql:
