@@ -15,11 +15,11 @@ public class ReactionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "reaction_id_seq")
     @SequenceGenerator(name = "reaction_id_seq", sequenceName = "reaction_id_seq", allocationSize = 1)
-    private Long id;
+    private long id;
 
     @ManyToOne
-    @JoinColumn(name = "happening_id", foreignKey = @ForeignKey(name = "FK_REACTION_HAPPENING"))
-    private HappeningEntity happening;
+    @JoinColumn(name = "incident_id", foreignKey = @ForeignKey(name = "FK_REACTION_INCIDENT"))
+    private IncidentEntity incident;
 
     @ManyToOne
     @JoinColumn(name = "comment_id", foreignKey = @ForeignKey(name = "FK_REACTION_COMMENT"))
