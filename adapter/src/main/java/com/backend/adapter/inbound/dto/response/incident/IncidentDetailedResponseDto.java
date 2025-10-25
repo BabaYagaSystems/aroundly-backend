@@ -1,6 +1,6 @@
 package com.backend.adapter.inbound.dto.response.incident;
 
-import com.backend.domain.media.Media;
+import com.backend.adapter.inbound.dto.media.MediaDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Set;
 import lombok.Builder;
@@ -24,6 +24,7 @@ import lombok.Builder;
 @Schema(description = "Detailed incident information including location, media, and community engagement metrics")
 @Builder(toBuilder = true)
 public record IncidentDetailedResponseDto(
+    long id,
 
     @Schema(
         description = "Short descriptive title of the incident",
@@ -46,7 +47,7 @@ public record IncidentDetailedResponseDto(
     @Schema(
         description = "Collection of related media files (images, videos, etc.)"
     )
-    Set<Media> media,
+    Set<MediaDto> media,
 
     @Schema(
         description = "Number of user confirmations for this incident",

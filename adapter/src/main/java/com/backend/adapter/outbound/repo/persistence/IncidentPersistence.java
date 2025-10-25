@@ -33,10 +33,9 @@ public class IncidentPersistence implements IncidentRepository {
     @Override
     public Incident save(Incident incident) {
       IncidentEntity incidentEntity = toEntityIncident(incident);
+      IncidentEntity savedEntity = incidentPersistenceRepository.save(incidentEntity);
 
-      incidentPersistenceRepository.save(incidentEntity);
-
-      return incident;
+      return toDomainIncident(savedEntity);
     }
 
     @Override
@@ -87,6 +86,7 @@ public class IncidentPersistence implements IncidentRepository {
 
     private Incident toDomainIncident(IncidentEntity entity) {
       return Incident.builder()
+        .id(entity.getId())
         .actorId(new ActorId("abc"))
         .locationId(new LocationId(entity.getLocation().getId()))
         .media(entity.getMedia().stream()

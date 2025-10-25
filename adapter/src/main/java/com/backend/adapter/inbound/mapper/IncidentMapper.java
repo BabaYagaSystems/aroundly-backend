@@ -36,7 +36,8 @@ public interface IncidentMapper {
    * @param incident the domain incident entity
    * @return a detailed response DTO
    */
-  @Mapping(target = "media", source = "media")
+  @Mapping(target = "id", source = "id")
+  @Mapping(target = "media", ignore = true)
   @Mapping(target = "like", source = "sentimentEngagement.likes")
   @Mapping(target = "dislike", source = "sentimentEngagement.dislikes")
   @Mapping(target = "deny", source = "engagementStats.denies")

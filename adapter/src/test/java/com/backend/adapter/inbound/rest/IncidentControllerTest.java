@@ -16,7 +16,7 @@ import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedRespons
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
 import com.backend.adapter.inbound.mapper.IncidentMapper;
 import com.backend.adapter.inbound.mapper.LocationMapper;
-import com.backend.adapter.inbound.mapper.assembler.IncidentDtoAssembler;
+import com.backend.adapter.inbound.mapper.assembler.IncidentDetailedDtoAssembler;
 import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
@@ -55,7 +55,7 @@ class IncidentControllerTest {
   private static final String ACTOR_ID = "abc-123";
 
   @Mock private IncidentUseCase incidentUseCase;
-  @Mock private IncidentDtoAssembler incidentDtoAssembler;
+  @Mock private IncidentDetailedDtoAssembler incidentDetailedDtoAssembler;
   @Mock private IncidentMapper incidentMapper;
   @Mock private LocationMapper locationMapper;
   @Mock private IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
@@ -76,7 +76,7 @@ class IncidentControllerTest {
 
     when(incidentMapper.toCreateIncidentCommand(incidentRequestDto)).thenReturn(command);
     when(incidentUseCase.create(command)).thenReturn(incident);
-    when(incidentDtoAssembler.toDetailedDto(incident)).thenReturn(incidentDetailedResponseDto);
+    when(incidentDetailedDtoAssembler.toDetailedDto(incident)).thenReturn(incidentDetailedResponseDto);
 
     final ResponseEntity<IncidentDetailedResponseDto> response = controller.create(incidentRequestDto);
 
@@ -103,7 +103,7 @@ class IncidentControllerTest {
 
     when(incidentMapper.toCreateIncidentCommand(updatedIncidentRequestDto)).thenReturn(command);
     when(incidentUseCase.update(HAPPENING_ID, command)).thenReturn(updatedIncident);
-    when(incidentDtoAssembler.toDetailedDto(updatedIncident))
+    when(incidentDetailedDtoAssembler.toDetailedDto(updatedIncident))
         .thenReturn(updatedIncidentDetailedResponseDto);
 
     final ResponseEntity<IncidentDetailedResponseDto> response =
@@ -136,7 +136,7 @@ class IncidentControllerTest {
     Incident incident = createIncident();
     IncidentDetailedResponseDto dto = createIncidentDetailedResponseDto();
     when(incidentUseCase.findById(HAPPENING_ID)).thenReturn(incident);
-    when(incidentDtoAssembler.toDetailedDto(incident))
+    when(incidentDetailedDtoAssembler.toDetailedDto(incident))
         .thenReturn(dto);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
@@ -191,7 +191,7 @@ class IncidentControllerTest {
     IncidentDetailedResponseDto confirmedIncidentDetailedResponseDto = createConfirmedIncidentDetailedResponseDto();
 
     when(incidentUseCase.confirm(INCIDENT_ID)).thenReturn(confirmedIncident);
-    when(incidentDtoAssembler.toDetailedDto(confirmedIncident))
+    when(incidentDetailedDtoAssembler.toDetailedDto(confirmedIncident))
         .thenReturn(confirmedIncidentDetailedResponseDto);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
@@ -209,7 +209,7 @@ class IncidentControllerTest {
     Incident deniedIncident = createDeniedIncident();
     IncidentDetailedResponseDto deniedIncidentDetailedResponseDto = createDeniedIncidentDetailedResponseDto();
     when(incidentUseCase.deny(INCIDENT_ID)).thenReturn(deniedIncident);
-    when(incidentDtoAssembler.toDetailedDto(deniedIncident))
+    when(incidentDetailedDtoAssembler.toDetailedDto(deniedIncident))
         .thenReturn(deniedIncidentDetailedResponseDto);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
@@ -314,7 +314,7 @@ class IncidentControllerTest {
       .title("title")
       .description("description")
       .actorUsername("vanea")
-      .media(createGetMedia())
+      .media(createGetMediaDto())
       .lat(12.12)
       .lon(43.43)
       .build();
@@ -328,6 +328,10 @@ class IncidentControllerTest {
         "image/png",
         data);
     return Set.of(mockMultipartFile);
+  }
+
+  private Set<MediaDto> createGetMediaDto() {
+    return Set.of(new MediaDto("file"));
   }
 
   private Set<Media> createGetMedia() {
@@ -361,7 +365,7 @@ class IncidentControllerTest {
       .title("updated title")
       .description("description")
       .actorUsername("vanea")
-      .media(createGetMedia())
+      .media(createGetMediaDto())
       .lat(12.12)
       .lon(43.43)
       .build();

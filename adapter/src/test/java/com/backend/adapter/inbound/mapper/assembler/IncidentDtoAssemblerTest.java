@@ -3,6 +3,7 @@ package com.backend.adapter.inbound.mapper.assembler;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import com.backend.adapter.inbound.dto.media.MediaDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.mapper.IncidentMapper;
 import com.backend.adapter.inbound.mapper.IncidentMapperImpl;
@@ -30,11 +31,14 @@ public class IncidentDtoAssemblerTest {
   @Mock private LocationRepository locationRepository;
   @InjectMocks private IncidentDtoAssembler assembler;
 
+
   private Incident incident;
   private Media media;
+  private MediaDto mediaDto;
 
   @BeforeEach
   void setUp() {
+    mediaDto = new MediaDto("file");
     media = new Media(3L, "file", "type");
     incident = Incident.builder()
       .actorId(new ActorId("abc-123"))
@@ -52,10 +56,11 @@ public class IncidentDtoAssemblerTest {
   @Test
   @Disabled
   void testEnrichAllFields() {
+
     IncidentDetailedResponseDto expected = IncidentDetailedResponseDto.builder()
       .title("title")
       .description("description")
-      .media(Set.of(media))
+      .media(Set.of(mediaDto))
       .confirm(2)
       .deny(1)
       .consecutiveDenies(1)
