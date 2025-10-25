@@ -49,17 +49,17 @@ class IncidentMapperTest {
         mapper.toIncidentPreviewResponseDto(incident);
 
     assertEquals(incident.getTitle(), incidentPreviewResponseDto.title());
-    assertEquals(createMediaDtos(), incidentPreviewResponseDto.media());
+    assertEquals(createGetMediaDtos(), incidentPreviewResponseDto.media());
   }
 
   private Incident createIncident() {
-    return new Incident(
-        new ActorId("id"),
-        new LocationId(1L),
-        "title",
-        "description",
-        createMedia()
-    );
+    return Incident.builder()
+        .actorId(new ActorId("id"))
+        .locationId(new LocationId(1L))
+        .title("title")
+        .description("description")
+        .media(createGetMedia())
+        .build();
   }
 
   private IncidentRequestDto createIncidentRequestDto() {
@@ -71,11 +71,11 @@ class IncidentMapperTest {
     );
   }
 
-  private Set<Media> createMedia() {
+  private Set<Media> createGetMedia() {
     return Set.of(new Media(3L, "file", "type"));
   }
 
-  private Set<MediaDto> createMediaDtos() {
+  private Set<MediaDto> createGetMediaDtos() {
     return Set.of(new MediaDto("file"));
   }
 

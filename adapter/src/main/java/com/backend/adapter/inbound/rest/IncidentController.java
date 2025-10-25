@@ -14,7 +14,6 @@ import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfir
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
-import com.backend.domain.happening.Happening;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
@@ -198,7 +197,7 @@ public class IncidentController {
   })
   public ResponseEntity<IncidentDetailedResponseDto> getIncidentInDetails(@PathVariable long id) {
     try {
-      Incident incident = (Incident) incidentUseCase.findById(id);
+      Incident incident = incidentUseCase.findById(id);
       IncidentDetailedResponseDto incidentDetailedResponseDto = assembler.toDetailedDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);

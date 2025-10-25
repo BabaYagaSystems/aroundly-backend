@@ -13,13 +13,13 @@ public interface HasMedia {
      *
      * @return the media resource
      */
-    Set<Media> media();
+    Set<Media> getMedia();
 
     default boolean addMedia(Media media) {
-        return media().add(media);
+        return getMedia().add(media);
     }
 
     default boolean removeMedia(Media media) {
-        return media().remove(media);
+        return getMedia().remove(media);
     }
 }

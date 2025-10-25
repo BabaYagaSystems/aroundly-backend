@@ -15,10 +15,10 @@ public class ClientEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "client_id_seq")
     @SequenceGenerator(name = "client_id_seq", sequenceName = "client_id_seq", allocationSize = 1)
-    private Long id;
+    private long id;
 
-    @Column(name = "keycloak_id", nullable = false)
-    private String keycloakId;
+    @Column(name = "foreign_id", nullable = false)
+    private String foreignId;
 
     @Column(name = "fcm_token")
     private String fcmToken;

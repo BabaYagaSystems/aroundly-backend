@@ -12,7 +12,7 @@ public interface Actored {
    *
    * @return the actor identifier
    */
-  ActorId actorId();
+  ActorId getActorId();
 
   /**
    * Checks whether the object was authored by the given actor.
@@ -21,6 +21,6 @@ public interface Actored {
    * @return {@code true} if the candidate matches the object's actor, otherwise {@code false}
    */
   default boolean authoredBy(ActorId candidate) {
-    return candidate.equals(actorId());
+    return candidate.equals(getActorId());
   }
 }

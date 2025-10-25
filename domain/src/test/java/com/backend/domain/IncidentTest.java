@@ -26,7 +26,13 @@ public class IncidentTest {
 
   @BeforeEach
   void setup() throws URISyntaxException {
-    incident = createIncident();
+    incident = Incident.builder()
+        .actorId(new ActorId("id"))
+        .locationId(new LocationId(1L))
+        .title("title")
+        .description("description")
+        .media(Set.of(new Media(3L, "file", "type")))
+        .build();
   }
 
   @Test
@@ -45,7 +51,7 @@ public class IncidentTest {
 
   @Test
   public void testIncidentExpired() {
-    Instant expiry = incident.expiresAt();
+    Instant expiry = incident.getExpiresAt();
     Instant fakeNow = expiry.plus(Duration.ofHours(1));
     Clock fakeClock = Clock.fixed(fakeNow, ZoneOffset.UTC);
 
@@ -60,27 +66,27 @@ public class IncidentTest {
   @Test
   public void testConfirmIncident() {
     Instant created = incident.createdAt();
-    setExpiresAt(incident, created.plus(Duration.ofMinutes(10)));
+    setGetExpiresAt(incident, created.plus(Duration.ofMinutes(10)));
 
     incident.confirmIncident();
-    assertEquals(15, Duration.between(created, getExpiresAt(incident)).toMinutes());
+    assertEquals(15, Duration.between(created, getGetExpiresAt(incident)).toMinutes());
 
     incident.confirmIncident();
-    assertEquals(20, Duration.between(created, getExpiresAt(incident)).toMinutes());
+    assertEquals(20, Duration.between(created, getGetExpiresAt(incident)).toMinutes());
 
     incident.confirmIncident();
-    assertEquals(25, Duration.between(created, getExpiresAt(incident)).toMinutes());
+    assertEquals(25, Duration.between(created, getGetExpiresAt(incident)).toMinutes());
 
     incident.confirmIncident();
-    assertEquals(30, Duration.between(created, getExpiresAt(incident)).toMinutes());
+    assertEquals(30, Duration.between(created, getGetExpiresAt(incident)).toMinutes());
 
     incident.confirmIncident();
-    assertEquals(30, Duration.between(created, getExpiresAt(incident)).toMinutes());
+    assertEquals(30, Duration.between(created, getGetExpiresAt(incident)).toMinutes());
   }
 
   @Test
   public void testDenyIncident() {
-    setExpiresAt(incident, Instant.now().plus(Duration.ofHours(30)));
+    setGetExpiresAt(incident, Instant.now().plus(Duration.ofHours(30)));
     assertFalse(incident.isDeleted());
     incident.denyIncident();
     assertFalse(incident.isDeleted());
@@ -90,7 +96,7 @@ public class IncidentTest {
     assertTrue(incident.isDeleted(), "Three consecutive denies should delete the incident");
   }
 
-  private static Instant getExpiresAt(Incident i) {
+  private static Instant getGetExpiresAt(Incident i) {
     try {
       Field f = Incident.class.getDeclaredField("expiresAt");
       f.setAccessible(true);
@@ -100,7 +106,7 @@ public class IncidentTest {
     }
   }
 
-  private static void setExpiresAt(Incident i, Instant value) {
+  private static void setGetExpiresAt(Incident i, Instant value) {
     try {
       Field f = Incident.class.getDeclaredField("expiresAt");
       f.setAccessible(true);
@@ -108,15 +114,5 @@ public class IncidentTest {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  private Incident createIncident() {
-    return new Incident(
-        new ActorId("id"),
-        new LocationId(1L),
-        "title",
-        "description",
-        Set.of(new Media(3L, "file", "type"))
-    );
   }
 }

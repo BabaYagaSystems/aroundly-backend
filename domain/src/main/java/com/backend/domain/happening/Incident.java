@@ -3,43 +3,51 @@ package com.backend.domain.happening;
 import com.backend.domain.actor.ActorId;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
+import com.backend.domain.mixins.Actored;
 import com.backend.domain.mixins.Expirable;
+import com.backend.domain.mixins.HasMedia;
+import com.backend.domain.mixins.Locatable;
+import com.backend.domain.mixins.Reactable;
 import com.backend.domain.reactions.EngagementStats;
+import com.backend.domain.reactions.SentimentEngagement;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Set;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.experimental.SuperBuilder;
 
 /**
- * Represents an {@link Incident}, a concrete type of {@link Happening}
- * that supports expiration and user engagement (confirms/denies).
+ * Represents an {@link Incident} that supports expiration
+ * and user engagement (confirms/denies).
  *
  * An Incident starts with a fixed lifespan of 30 minutes (see {@link Expirable#TTL}),
  * which can be extended by user confirmations (but never beyond the max 30 minutes).
  * It can also be deleted if it either expires naturally or receives 3 consecutive denies.
  */
-@SuperBuilder(toBuilder = true)
-public class Incident extends Happening implements Expirable {
+@Getter
+public class Incident implements Expirable, Actored, Locatable, HasMedia, Reactable {
 
-  /**
-   * Extension applied when a confirmation is added (capped at 30 minutes max).
-   */
-  private static final Duration EXTENSION = Duration.ofMinutes(5);
-
-
-  //Safety net
-  @Getter
-  private EngagementStats engagementStats = new EngagementStats(0, 0, 0);
+  private final ActorId actorId;
+  private final LocationId locationId;
+  private final SentimentEngagement sentimentEngagement;
+  private final Set<Media> media;
+  private final String title;
+  private final String description;
+  private EngagementStats engagementStats;
 
   /**
    * Holds the current expiration timestamp (mutable).
    * Initialized to the default (createdAt + TTL) using the interface default.
    */
-  private Instant expiresAt = Instant.now().plus(TTL);
+  private Instant expiresAt;
+
+  /**
+   * Extension applied when a confirmation is added (capped at 30 minutes max).
+   */
+  private static final Duration EXTENSION = Duration.ofMinutes(5);
 
   /**
    * Constructs a new {@code Incident} instance with initial values.
@@ -50,16 +58,24 @@ public class Incident extends Happening implements Expirable {
    * @param title       the title of the incident
    * @param description the description of the incident
    */
+  @Builder(toBuilder = true)
   public Incident(
-      @NonNull ActorId actorId,
-      @NonNull LocationId locationId,
+      ActorId actorId,
+      LocationId locationId,
       String title,
       String description,
-      @NonNull Set<Media> media) {
+      Set<Media> media,
+      SentimentEngagement sentimentEngagement,
+      EngagementStats engagementStats) {
 
-    super(actorId, locationId, media, title, description);
+    this.actorId = actorId;
+    this.locationId = locationId;
+    this.title = title;
+    this.description = description;
+    this.media = Collections.unmodifiableSet(media);
+    this.sentimentEngagement = sentimentEngagement;
     this.engagementStats = new EngagementStats(0, 0, 0);
-    this.expiresAt = Expirable.super.expiresAt();
+    this.expiresAt = Instant.now().plus(TTL);
   }
 
   /**
@@ -84,7 +100,7 @@ public class Incident extends Happening implements Expirable {
     if (Instant.now().isAfter(expiresAt)) return;
 
     Instant maxExpiry = createdAt().plus(TTL); // now +30 minutes
-    Instant newExpiry = expiresAt().plus(EXTENSION); // +5 minutes
+    Instant newExpiry = getExpiresAt().plus(EXTENSION); // +5 minutes
 
     if (newExpiry.isAfter(maxExpiry)) newExpiry = maxExpiry;
 
@@ -110,7 +126,7 @@ public class Incident extends Happening implements Expirable {
    * @return the expiration time
    */
   @Override
-  public Instant expiresAt() {
+  public Instant getExpiresAt() {
     return expiresAt;
   }
 
@@ -122,4 +138,5 @@ public class Incident extends Happening implements Expirable {
   private void overrideExpiresAt(Instant newExpiry) {
     this.expiresAt = newExpiry;
   }
+
 }

@@ -12,5 +12,5 @@ public interface Locatable {
    *
    * @return the location identifier
    */
-  LocationId locationId();
+  LocationId getLocationId();
 }

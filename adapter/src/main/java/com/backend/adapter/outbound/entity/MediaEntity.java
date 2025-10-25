@@ -8,13 +8,12 @@ import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.SequenceGenerator;
-import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import lombok.Builder;
 
 /**
  * Entity representing a stored media object.
@@ -23,8 +22,8 @@ import java.time.OffsetDateTime;
  * its storage key, content type, size, and creation timestamp.
  */
 @Entity(name = "medias")
+@Builder
 public class MediaEntity {
-
   @Id
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "media_id_seq")
   @SequenceGenerator(name = "media_id_seq", sequenceName = "media_id_seq", allocationSize = 1)
@@ -43,28 +42,25 @@ public class MediaEntity {
   private OffsetDateTime createdAt;
 
   @ManyToOne(fetch = LAZY, optional = false)
-  @JoinColumn(name = "happening_id", foreignKey = @ForeignKey(name = "FK_MEDIA_HAPPENING"))
-  private HappeningEntity happeningEntity;
+  @JoinColumn(name = "incident_id", foreignKey = @ForeignKey(name = "FK_MEDIA_INCIDENT"))
+  private IncidentEntity incidentEntity;
 
-  public MediaEntity() { /* JPA */ }
-
-  @PrePersist
-  void onCreate() {
-    if (createdAt == null) createdAt = OffsetDateTime.now();
-  }
-
-  public MediaEntity(
-      long id,
-      String key,
-      String contentType,
-      long size,
-      OffsetDateTime createdAt) {
-
+  public MediaEntity(long id, String key, String contentType, long size, OffsetDateTime createdAt,
+      IncidentEntity incidentEntity) {
     this.id = id;
     this.key = key;
     this.contentType = contentType;
     this.size = size;
     this.createdAt = createdAt;
+    this.incidentEntity = incidentEntity;
+  }
+
+  public MediaEntity() {
+  }
+
+  @PrePersist
+  void onCreate() {
+    if (createdAt == null) createdAt = OffsetDateTime.now();
   }
 
   public long getId() {
@@ -107,11 +103,11 @@ public class MediaEntity {
     this.createdAt = createdAt;
   }
 
-  public HappeningEntity getHappeningEntity() {
-    return happeningEntity;
+  public IncidentEntity getIncidentEntity() {
+    return incidentEntity;
   }
 
-  public void setHappeningEntity(HappeningEntity happeningEntity) {
-    this.happeningEntity = happeningEntity;
+  public void setIncidentEntity(IncidentEntity incidentEntity) {
+    this.incidentEntity = incidentEntity;
   }
 }
