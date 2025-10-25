@@ -21,34 +21,34 @@ import java.util.stream.Collectors;
 @Repository
 public class IncidentPersistence implements IncidentRepository {
 
-  private final IncidentPersistenceRepository incidentPersistenceRepository;
-  private final LocationPersistenceRepository locationPersistenceRepository;
+    private final IncidentPersistenceRepository incidentPersistenceRepository;
+    private final LocationPersistenceRepository locationPersistenceRepository;
 
-  private final MediaEntityMapper mediaEntityMapper;
+    private final MediaEntityMapper mediaEntityMapper;
 
-  /**
+    /**
      * Since the Happening is abstract it needs to be created by each child entity that implements it
      * Also it needs to be mapped manually since MapStruct is not working with abstract classes
-     * */
+     */
     @Override
     public Incident save(Incident incident) {
-      IncidentEntity incidentEntity = toEntityIncident(incident);
-      IncidentEntity savedEntity = incidentPersistenceRepository.save(incidentEntity);
+        IncidentEntity incidentEntity = toEntityIncident(incident);
+        IncidentEntity savedEntity = incidentPersistenceRepository.save(incidentEntity);
 
-      return toDomainIncident(savedEntity);
+        return toDomainIncident(savedEntity);
     }
 
     @Override
     public Optional<Incident> findById(long id) {
         IncidentEntity incidentEntity = incidentPersistenceRepository.findById(id)
-            .orElseThrow(() -> new IllegalStateException("Incident not found"));
+                .orElseThrow(() -> new IllegalStateException("Incident not found"));
 
         return Optional.of(toDomainIncident(incidentEntity));
     }
 
     @Override
     public boolean existsById(long happeningId) {
-      return incidentPersistenceRepository.existsById(happeningId);
+        return incidentPersistenceRepository.existsById(happeningId);
     }
 
     @Override
@@ -56,51 +56,54 @@ public class IncidentPersistence implements IncidentRepository {
 
         List<IncidentEntity> incidentEntities = incidentPersistenceRepository.findAllInGivenRange(lat0, lon0, radiusMeters);
 
-      return incidentEntities.stream()
-          .map(this::toDomainIncident)
-          .toList();
+        return incidentEntities.stream()
+                .map(this::toDomainIncident)
+                .toList();
     }
 
     private IncidentEntity toEntityIncident(Incident incident) {
-      LocationEntity locationEntity = locationPersistenceRepository
-        .findById(incident.getLocationId().value())
-        .orElseThrow(() -> new IllegalStateException("Location not found"));
+        LocationEntity locationEntity = locationPersistenceRepository
+                .findById(incident.getLocationId().value())
+                .orElseThrow(() -> new IllegalStateException("Location not found"));
 
-      IncidentEntity incidentEntity =  IncidentEntity.builder()
-        .title(incident.getTitle())
-        .description(incident.getDescription())
-        .location(locationEntity)
-        .timePosted(incident.createdAt())
-        .range(1000) /// WHERE FROM DO WE NEED TO GET THIS VALUE
-        .confirms(incident.getEngagementStats().confirms())
-        .denies(incident.getEngagementStats().denies())
-        .expiresAt(incident.getExpiresAt())
-        .build();
+        IncidentEntity incidentEntity = IncidentEntity.builder()
+                // without id JPA thinks the object doesn't exit in the DB
+                .id(incident.getId())
+                .title(incident.getTitle())
+                .description(incident.getDescription())
+                .location(locationEntity)
+                .timePosted(incident.createdAt())
+                .range(1000) /// WHERE FROM DO WE NEED TO GET THIS VALUE
+                .confirms(incident.getEngagementStats().confirms())
+                .denies(incident.getEngagementStats().denies())
+                .consecutiveDenies(incident.getEngagementStats().consecutiveDenies())
+                .expiresAt(incident.getExpiresAt())
+                .build();
 
-      incident.getMedia().stream()
-          .map(mediaEntityMapper::toEntity)
-          .forEach(incidentEntity::addMedia);
+        incident.getMedia().stream()
+                .map(mediaEntityMapper::toEntity)
+                .forEach(incidentEntity::addMedia);
 
-      return incidentEntity;
+        return incidentEntity;
     }
 
     private Incident toDomainIncident(IncidentEntity entity) {
-      return Incident.builder()
-        .id(entity.getId())
-        .actorId(new ActorId("abc"))
-        .locationId(new LocationId(entity.getLocation().getId()))
-        .media(entity.getMedia().stream()
-            .map(mediaEntityMapper::toDomain)
-            .collect(Collectors.toSet()))
-        .title(entity.getTitle())
-        .description(entity.getDescription())
-        .engagementStats(new EngagementStats(
-            entity.getConfirms(),
-            entity.getDenies(),
-            entity.getDenies()))
-        .expiresAt(entity.getExpiresAt())
-        .build();
-        }
+        return Incident.builder()
+                .id(entity.getId())
+                .actorId(new ActorId("abc"))
+                .locationId(new LocationId(entity.getLocation().getId()))
+                .media(entity.getMedia().stream()
+                        .map(mediaEntityMapper::toDomain)
+                        .collect(Collectors.toSet()))
+                .title(entity.getTitle())
+                .description(entity.getDescription())
+                .engagementStats(new EngagementStats(
+                        entity.getConfirms(),
+                        entity.getDenies(),
+                        entity.getConsecutiveDenies()))
+                .expiresAt(entity.getExpiresAt())
+                .build();
+    }
 
     @Override
     public void deleteById(long id) {
