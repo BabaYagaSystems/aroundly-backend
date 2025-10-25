@@ -17,11 +17,11 @@ public class CommentEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "comment_id_seq")
     @SequenceGenerator(name = "comment_id_seq", sequenceName = "comment_id_seq", allocationSize = 1)
-    private Long id;
+    private long id;
 
     @ManyToOne
-    @JoinColumn(name = "happening_id", foreignKey = @ForeignKey(name = "FK_COMMENT_HAPPENING"))
-    private HappeningEntity happening;
+    @JoinColumn(name = "incident_id", foreignKey = @ForeignKey(name = "FK_COMMENT_INCIDENT"))
+    private IncidentEntity incident;
 
     @ManyToOne
     @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "FK_COMMENT_CLIENT"))

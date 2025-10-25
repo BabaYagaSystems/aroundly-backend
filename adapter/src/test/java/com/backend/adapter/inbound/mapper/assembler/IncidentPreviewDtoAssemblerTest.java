@@ -37,12 +37,18 @@ class IncidentPreviewDtoAssemblerTest {
   @BeforeEach
   void setUp() {
     media = Set.of(new Media(1L, "file", "image/png"));
-    incident = new Incident(new ActorId("actor"), new LocationId(42L), "title", "desc", media);
+    incident = Incident.builder()
+        .actorId(new ActorId("actor"))
+        .locationId(new LocationId(42L))
+        .title("title")
+        .description("desc")
+        .media(media)
+        .build();
     location = new Location(new LocationId(42L), 21.5, 45.9, "address");
   }
 
   @Test
-  void enrichesPreviewWithLocationAndMedia() {
+  void enrichesPreviewWithLocationAndGetMedia() {
     Set<MediaDto> previewMedia = Set.of(new MediaDto("preview"));
     IncidentPreviewResponseDto baseDto = IncidentPreviewResponseDto.builder()
         .title("title")

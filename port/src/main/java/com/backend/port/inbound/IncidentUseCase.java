@@ -1,16 +1,37 @@
 package com.backend.port.inbound;
 
-
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
 import java.util.List;
 
 /**
- * Defines use cases specific to {@link Incident} management,
- * extending the general {@link HappeningUseCase}.
+ * Defines use cases specific to {@link Incident} management.
  */
-public interface IncidentUseCase extends HappeningUseCase {
+public interface IncidentUseCase {
+
+    /**
+     * Finds an incident by its unique identifier.
+     *
+     * @param incidentId the identifier of the incident
+     * @return the Happening with the given id
+     */
+    Incident findById(long incidentId);
+
+    /**
+     * Deletes a Happening by its unique identifier.
+     *
+     * @param incidentId the identifier of the incident to delete
+     */
+    void deleteById(long incidentId);
+
+    /**
+     * Finds all Incidents authored by a given actor.
+     *
+     * @param actorId the identifier of the actor
+     * @return the list of Happenings by the actor
+     */
+    List<Incident> findByActorId(String actorId);
 
     /**
      * Finds all incidents within a given geographic radius.

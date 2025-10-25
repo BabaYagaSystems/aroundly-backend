@@ -18,7 +18,7 @@ public record Comment(
     @NonNull HappeningId happeningId,
     @NonNull ActorId actorId,
     Instant createdAt,
-    SentimentEngagement sentimentEngagement) implements TimeStamped, Reactable {
+    SentimentEngagement getSentimentEngagement) implements TimeStamped, Reactable {
 
     /**
      * Constructs a {@code Comment} instance with input validation.

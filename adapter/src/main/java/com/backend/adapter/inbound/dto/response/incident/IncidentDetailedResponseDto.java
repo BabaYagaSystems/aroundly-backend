@@ -24,6 +24,7 @@ import lombok.Builder;
 @Schema(description = "Detailed incident information including location, media, and community engagement metrics")
 @Builder(toBuilder = true)
 public record IncidentDetailedResponseDto(
+
     @Schema(
         description = "Short descriptive title of the incident",
         example = "Road closure due to construction"

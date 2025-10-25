@@ -1,9 +1,7 @@
 package com.backend.services;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -11,8 +9,6 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Field;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
 import com.backend.port.inbound.commands.CoordinatesCommand;
-import com.backend.port.outbound.repo.LocationIdGenerator;
 import com.backend.port.outbound.repo.LocationRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,14 +28,13 @@ class LocationServiceTest {
   private static final String MAPBOX_TOKEN = "test-token";
 
   @Mock private LocationRepository locationRepository;
-  @Mock private LocationIdGenerator locationIdGenerator;
   @Mock private HttpClient httpClient;
 
   private LocationService locationService;
 
   @BeforeEach
   void setUp() throws Exception {
-    locationService = new LocationService(locationRepository, locationIdGenerator, MAPBOX_TOKEN);
+    locationService = new LocationService(locationRepository, MAPBOX_TOKEN);
 
     Field httpClientField = LocationService.class.getDeclaredField("httpClient");
     httpClientField.setAccessible(true);
@@ -59,7 +53,6 @@ class LocationServiceTest {
 
     assertSame(existing, result);
     verify(locationRepository, never()).save(any());
-    verifyNoInteractions(locationIdGenerator);
     verifyNoInteractions(httpClient);
   }
 

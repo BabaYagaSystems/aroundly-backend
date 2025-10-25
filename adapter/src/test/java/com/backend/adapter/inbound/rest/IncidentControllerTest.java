@@ -21,7 +21,6 @@ import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.domain.actor.ActorId;
-import com.backend.domain.happening.Happening;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
@@ -134,9 +133,11 @@ class IncidentControllerTest {
 
   @Test
   void testGetIncidentInDetails() throws IOException {
-    when(incidentUseCase.findById(HAPPENING_ID)).thenReturn(createIncident());
-    when(incidentDtoAssembler.toDetailedDto(createIncident()))
-        .thenReturn(createIncidentDetailedResponseDto());
+    Incident incident = createIncident();
+    IncidentDetailedResponseDto dto = createIncidentDetailedResponseDto();
+    when(incidentUseCase.findById(HAPPENING_ID)).thenReturn(incident);
+    when(incidentDtoAssembler.toDetailedDto(incident))
+        .thenReturn(dto);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
         controller.getIncidentInDetails(HAPPENING_ID);
@@ -150,8 +151,8 @@ class IncidentControllerTest {
 
   @Test
   void testFindActorIncidentsInPreview() throws IOException {
-    final List<Happening> happenings = List.of(createIncident());
-    when(incidentUseCase.findByActorId(ACTOR_ID)).thenReturn(happenings);
+    final List<Incident> incidents = List.of(createIncident());
+    when(incidentUseCase.findByActorId(ACTOR_ID)).thenReturn(incidents);
     when(incidentPreviewDtoAssembler.toPreviewDto(any(Incident.class)))
         .thenReturn(createIncidentPreviewResponseDto());
 
@@ -185,9 +186,13 @@ class IncidentControllerTest {
 
   @Test
   void testConfirmIncidentPresence() throws IOException {
-    when(incidentUseCase.confirm(INCIDENT_ID)).thenReturn(createConfirmedIncident());
-    when(incidentDtoAssembler.toDetailedDto(createConfirmedIncident()))
-        .thenReturn(createConfirmedIncidentDetailedResponseDto());
+
+    Incident confirmedIncident = createConfirmedIncident();
+    IncidentDetailedResponseDto confirmedIncidentDetailedResponseDto = createConfirmedIncidentDetailedResponseDto();
+
+    when(incidentUseCase.confirm(INCIDENT_ID)).thenReturn(confirmedIncident);
+    when(incidentDtoAssembler.toDetailedDto(confirmedIncident))
+        .thenReturn(confirmedIncidentDetailedResponseDto);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
         controller.confirmIncidentPresence(INCIDENT_ID);
@@ -196,14 +201,16 @@ class IncidentControllerTest {
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(body);
-    assertEquals(createConfirmedIncidentDetailedResponseDto(), body);
+    assertEquals(confirmedIncidentDetailedResponseDto, body);
   }
 
   @Test
   void testDenyIncidentPresence() throws IOException {
-    when(incidentUseCase.deny(INCIDENT_ID)).thenReturn(createDeniedIncident());
-    when(incidentDtoAssembler.toDetailedDto(createDeniedIncident()))
-        .thenReturn(createDeniedIncidentDetailedResponseDto());
+    Incident deniedIncident = createDeniedIncident();
+    IncidentDetailedResponseDto deniedIncidentDetailedResponseDto = createDeniedIncidentDetailedResponseDto();
+    when(incidentUseCase.deny(INCIDENT_ID)).thenReturn(deniedIncident);
+    when(incidentDtoAssembler.toDetailedDto(deniedIncident))
+        .thenReturn(deniedIncidentDetailedResponseDto);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
         controller.denyIncidentPresence(INCIDENT_ID);
@@ -212,7 +219,7 @@ class IncidentControllerTest {
 
     assertEquals(HttpStatus.OK, response.getStatusCode());
     assertNotNull(body);
-    assertEquals(createDeniedIncidentDetailedResponseDto(), body);
+    assertEquals(deniedIncidentDetailedResponseDto, body);
   }
 
   @Test
@@ -296,7 +303,7 @@ class IncidentControllerTest {
   private IncidentPreviewResponseDto createIncidentPreviewResponseDto() throws IOException {
     return IncidentPreviewResponseDto.builder()
       .title("title")
-      .media(createMediaDtos())
+      .media(createGetMediaDtos())
       .lat(12.12)
       .lon(43.43)
       .build();
@@ -307,7 +314,7 @@ class IncidentControllerTest {
       .title("title")
       .description("description")
       .actorUsername("vanea")
-      .media(createMedia())
+      .media(createGetMedia())
       .lat(12.12)
       .lon(43.43)
       .build();
@@ -323,11 +330,11 @@ class IncidentControllerTest {
     return Set.of(mockMultipartFile);
   }
 
-  private Set<Media> createMedia() {
+  private Set<Media> createGetMedia() {
     return Set.of(new Media(3L, "file", "type"));
   }
 
-  private Set<MediaDto> createMediaDtos() {
+  private Set<MediaDto> createGetMediaDtos() {
     return Set.of(new MediaDto("https://example.com/file"));
   }
 
@@ -354,7 +361,7 @@ class IncidentControllerTest {
       .title("updated title")
       .description("description")
       .actorUsername("vanea")
-      .media(createMedia())
+      .media(createGetMedia())
       .lat(12.12)
       .lon(43.43)
       .build();
@@ -366,7 +373,7 @@ class IncidentControllerTest {
       .locationId(new LocationId(1L))
       .title("title")
       .description("description")
-      .media(createMedia())
+      .media(createGetMedia())
       .build();
   }
 
@@ -400,7 +407,7 @@ class IncidentControllerTest {
       .locationId(new LocationId(1L))
       .title("updated title")
       .description("description")
-      .media(createMedia())
+      .media(createGetMedia())
       .build();
   }
 }
