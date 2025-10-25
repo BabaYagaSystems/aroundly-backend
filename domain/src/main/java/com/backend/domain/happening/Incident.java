@@ -66,16 +66,21 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
       String description,
       Set<Media> media,
       SentimentEngagement sentimentEngagement,
-      EngagementStats engagementStats) {
+      EngagementStats engagementStats,
+      Instant expiresAt) {
 
     this.actorId = actorId;
     this.locationId = locationId;
     this.title = title;
     this.description = description;
     this.media = Collections.unmodifiableSet(media);
-    this.sentimentEngagement = sentimentEngagement;
-    this.engagementStats = new EngagementStats(0, 0, 0);
-    this.expiresAt = Instant.now().plus(TTL);
+    this.sentimentEngagement = sentimentEngagement != null
+        ? sentimentEngagement
+        : SentimentEngagement.builder().dislikes(0).likes(0).build();
+    this.engagementStats = engagementStats != null
+        ? engagementStats
+        : new EngagementStats(0, 0, 0);
+    this.expiresAt = expiresAt != null ? expiresAt : Instant.now().plus(TTL);;
   }
 
   /**

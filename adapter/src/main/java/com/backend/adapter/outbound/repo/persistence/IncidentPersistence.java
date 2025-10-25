@@ -75,6 +75,7 @@ public class IncidentPersistence implements IncidentRepository {
         .range(1000) /// WHERE FROM DO WE NEED TO GET THIS VALUE
         .confirms(incident.getEngagementStats().confirms())
         .denies(incident.getEngagementStats().denies())
+        .expiresAt(incident.getExpiresAt())
         .build();
 
       incident.getMedia().stream()
@@ -97,6 +98,7 @@ public class IncidentPersistence implements IncidentRepository {
             entity.getConfirms(),
             entity.getDenies(),
             entity.getDenies()))
+        .expiresAt(entity.getExpiresAt())
         .build();
         }
 

@@ -40,7 +40,9 @@ public class LocationPersistence implements LocationRepository {
 
   @Override
   public Optional<Location> findByCoordinate(double latitude, double longitude) {
-    return locationPersistenceRepository.findByCoordinate(latitude, longitude);
+    return locationPersistenceRepository
+        .findByLatAndLng(latitude, longitude)
+        .map(this::toLocation);
   }
 
   @Override

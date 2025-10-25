@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class IncidentDtoAssembler {
 
-  private final IncidentMapper mapper;
   private final LocationRepository locationRepository;
 
   /**
@@ -27,8 +26,6 @@ public class IncidentDtoAssembler {
    * @return a fully populated detailed response DTO
    */
   public IncidentDetailedResponseDto toDetailedDto(Incident incident) {
-//    IncidentDetailedResponseDto dto = mapper.toIncidentDetailedResponseDto(incident);
-
     Location location = locationRepository.findById(incident.getLocationId().value());
     double lat = location.latitude();
     double lon = location.longitude();

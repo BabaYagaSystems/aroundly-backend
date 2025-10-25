@@ -42,6 +42,7 @@ public class IncidentEntity {
   private int confirms;
   private int denies;
   private int consecutiveDenies;
+  private Instant expiresAt;
 
   public void addMedia(MediaEntity m) {
     media.add(m);

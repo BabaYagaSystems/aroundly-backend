@@ -4,7 +4,6 @@ import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
 import com.backend.port.inbound.LocationUseCase;
 import com.backend.port.inbound.commands.CoordinatesCommand;
-import com.backend.port.outbound.repo.LocationIdGenerator;
 import com.backend.port.outbound.repo.LocationRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,18 +24,15 @@ import org.springframework.stereotype.Service;
 public class LocationService implements LocationUseCase {
 
     private final LocationRepository locationRepository;
-    private final LocationIdGenerator locationIdGenerator;
     private final String mapboxToken;
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public LocationService(
             LocationRepository locationRepository,
-            LocationIdGenerator locationIdGenerator,
             @Value("${mapbox.token}") String mapboxToken) {
 
         this.locationRepository = locationRepository;
-        this.locationIdGenerator = locationIdGenerator;
         this.mapboxToken = mapboxToken;
     }
 

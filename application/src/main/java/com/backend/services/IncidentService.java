@@ -22,7 +22,6 @@ import com.backend.services.exceptions.InvalidCoordinatesException;
 import com.backend.services.exceptions.LocationNotFoundException;
 import com.backend.services.exceptions.ValidationException;
 
-import java.time.Instant;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 
