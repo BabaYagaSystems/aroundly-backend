@@ -15,6 +15,9 @@ import lombok.Builder;
 @Schema(description = "Preview information for an incident containing basic details for list views")
 @Builder(toBuilder = true)
 public record IncidentPreviewResponseDto(
+
+    long id,
+
     @Schema(
         description = "Short descriptive title of the incident",
         example = "Road closure due to construction"

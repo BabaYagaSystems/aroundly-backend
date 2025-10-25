@@ -6,7 +6,7 @@ import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedRespons
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
 import com.backend.adapter.inbound.mapper.IncidentMapper;
 import com.backend.adapter.inbound.mapper.LocationMapper;
-import com.backend.adapter.inbound.mapper.assembler.IncidentDtoAssembler;
+import com.backend.adapter.inbound.mapper.assembler.IncidentDetailedDtoAssembler;
 import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.rest.exception.incident.ActorNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.DuplicateIncidentException;
@@ -54,21 +54,21 @@ import org.springframework.web.bind.annotation.RestController;
 public class IncidentController {
 
   private final IncidentUseCase incidentUseCase;
-  private final IncidentDtoAssembler assembler;
+  private final IncidentDetailedDtoAssembler incidentDetailedResponseAssembler;
   private final IncidentMapper incidentMapper;
   private final LocationMapper locationMapper;
   private final IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
-      IncidentDtoAssembler assembler,
+      IncidentDetailedDtoAssembler incidentDetailedResponseAssembler,
       IncidentMapper incidentMapper,
       LocationMapper locationMapper,
       IncidentPreviewDtoAssembler incidentPreviewDtoAssembler) {
 
     this.incidentUseCase = incidentUseCase;
     this.incidentMapper = incidentMapper;
-    this.assembler = assembler;
+    this.incidentDetailedResponseAssembler = incidentDetailedResponseAssembler;
     this.locationMapper = locationMapper;
     this.incidentPreviewDtoAssembler = incidentPreviewDtoAssembler;
   }
@@ -97,7 +97,7 @@ public class IncidentController {
           .toCreateIncidentCommand(incidentRequestDto);
 
       Incident incident = incidentUseCase.create(createIncidentCommand);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = assembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return new ResponseEntity<>(incidentDetailedResponseDto, HttpStatus.CREATED);
 
@@ -136,7 +136,7 @@ public class IncidentController {
           .toCreateIncidentCommand(newIncidentRequestDto);
 
       Incident updatedIncident = incidentUseCase.update(id, newCreateIncidentCommand);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = assembler.toDetailedDto(updatedIncident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(updatedIncident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -198,7 +198,7 @@ public class IncidentController {
   public ResponseEntity<IncidentDetailedResponseDto> getIncidentInDetails(@PathVariable long id) {
     try {
       Incident incident = incidentUseCase.findById(id);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = assembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -294,7 +294,7 @@ public class IncidentController {
 
     try {
       Incident incident = incidentUseCase.confirm(id);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = assembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -325,7 +325,7 @@ public class IncidentController {
   public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(@PathVariable long id) {
     try {
       Incident incident = incidentUseCase.deny(id);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = assembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {

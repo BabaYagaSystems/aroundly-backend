@@ -34,7 +34,7 @@ public class IncidentDtoAssembler {
     return IncidentDetailedResponseDto.builder()
         .title(incident.getTitle())
         .description(incident.getDescription())
-        .media(incident.getMedia())
+//        .media(incident.getMedia())
         .confirm(incident.getEngagementStats().confirms())
         .deny(incident.getEngagementStats().denies())
         .consecutiveDenies(incident.getEngagementStats().consecutiveDenies())
