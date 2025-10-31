@@ -58,22 +58,18 @@ public class LocationService implements LocationUseCase {
         final double latitude = coordinatesCommand.lat();
         final double longitude = coordinatesCommand.lon();
 
-        return locationRepository
-                .findByCoordinate(latitude, longitude)
-                .orElseGet(() -> createLocation(longitude, latitude));
+          return locationRepository
+              .findByCoordinate(latitude, longitude)
+              .orElseGet(() -> createLocation(longitude, latitude));
     }
-
-
-    /// WHY MANUALLY ASSIGN THE ID???
 
     private Location createLocation(double longitude, double latitude) {
         String address = reverseGeocode(longitude, latitude);
-        Location newLocation = new Location(
-                new LocationId(0L),
-//            locationIdGenerator.nextId(),
-            longitude,
-            latitude,
-            address);
+        Location newLocation = Location.builder()
+          .longitude(longitude)
+          .latitude(latitude)
+          .address(address)
+          .build();
 
         return locationRepository.save(newLocation);
     }
