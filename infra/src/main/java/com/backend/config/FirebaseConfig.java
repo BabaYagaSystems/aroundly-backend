@@ -35,8 +35,6 @@ public class FirebaseConfig {
 
               InputStream serviceAccountStream;
 
-
-
               if (serviceAccountFile.trim().startsWith("{")) {
                 log.info("Initializing Firebase using JSON from environment variable...");
                 serviceAccountStream =
