@@ -10,8 +10,8 @@ import com.backend.port.outbound.repo.ReactionRepository;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
+//import org.springframework.data.redis.core.StringRedisTemplate;
+//import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,18 +61,18 @@ public class IncidentReactionRepository implements ReactionRepository {
         return {likes, dislikes, reactionFlag}
         """;
 
-  private static final DefaultRedisScript<List> REACTION_SCRIPT;
-
-  static {
-    REACTION_SCRIPT = new DefaultRedisScript<>();
-    REACTION_SCRIPT.setScriptText(REACTION_LUA);
-    REACTION_SCRIPT.setResultType(List.class);
-  }
-
-  private final IncidentPersistenceRepository incidentRepository;
-  private final ReactionPersistenceRepository reactionPersistenceRepository;
-  private final StringRedisTemplate redisTemplate;
-  private final ReactionKeyBuilder keyBuilder;
+//  private static final DefaultRedisScript<List> REACTION_SCRIPT;
+//
+//  static {
+//    REACTION_SCRIPT = new DefaultRedisScript<>();
+//    REACTION_SCRIPT.setScriptText(REACTION_LUA);
+//    REACTION_SCRIPT.setResultType(List.class);
+//  }
+//
+//  private final IncidentPersistenceRepository incidentRepository;
+//  private final ReactionPersistenceRepository reactionPersistenceRepository;
+//  private final StringRedisTemplate redisTemplate;
+//  private final ReactionKeyBuilder keyBuilder;
 
   /**
    * Applies a like reaction by toggling the Redis sets and persisting the user’s latest choice.
@@ -80,24 +80,25 @@ public class IncidentReactionRepository implements ReactionRepository {
   @Override
   @Transactional
   public ReactionSummary addLike(long incidentId, String userId) {
-    ReactionSummary summary = execute(incidentId, userId, "ADD_LIKE");
-    IncidentEntity incidentEntity = incidentRepository.getReferenceById(incidentId);
-
-    reactionPersistenceRepository.findByIncidentId(incidentId)
-        .ifPresentOrElse(existing -> {
-          if (existing.getReactionType() != ReactionType.LIKE) {
-            existing.setReactionType(ReactionType.LIKE);
-            existing.setReactedAt(Instant.now());
-          }
-        }, () -> reactionPersistenceRepository.save(
-            ReactionEntity.builder()
-                .incident(incidentEntity)
-                .reactionType(ReactionType.LIKE)
-                .reactedAt(Instant.now())
-                .build()
-        ));
-
-    return summary;
+    return null;
+//    ReactionSummary summary = execute(incidentId, userId, "ADD_LIKE");
+//    IncidentEntity incidentEntity = incidentRepository.getReferenceById(incidentId);
+//
+//    reactionPersistenceRepository.findByIncidentId(incidentId)
+//        .ifPresentOrElse(existing -> {
+//          if (existing.getReactionType() != ReactionType.LIKE) {
+//            existing.setReactionType(ReactionType.LIKE);
+//            existing.setReactedAt(Instant.now());
+//          }
+//        }, () -> reactionPersistenceRepository.save(
+//            ReactionEntity.builder()
+//                .incident(incidentEntity)
+//                .reactionType(ReactionType.LIKE)
+//                .reactedAt(Instant.now())
+//                .build()
+//        ));
+//
+//    return summary;
   }
 
   /**
@@ -106,24 +107,25 @@ public class IncidentReactionRepository implements ReactionRepository {
   @Override
   @Transactional
   public ReactionSummary addDislike(long incidentId, String userId) {
-    ReactionSummary summary = execute(incidentId, userId, "ADD_DISLIKE");
-    IncidentEntity incident = incidentRepository.getReferenceById(incidentId);
+//    ReactionSummary summary = execute(incidentId, userId, "ADD_DISLIKE");
+//    IncidentEntity incident = incidentRepository.getReferenceById(incidentId);
+//
+//    reactionPersistenceRepository.findByIncidentId(incidentId)
+//        .ifPresentOrElse(existing -> {
+//          if (existing.getReactionType() != ReactionType.DISLIKE) {
+//            existing.setReactionType(ReactionType.DISLIKE);
+//            existing.setReactedAt(Instant.now());
+//          }
+//        }, () -> reactionPersistenceRepository.save(
+//            ReactionEntity.builder()
+//                .incident(incident)
+//                .reactionType(ReactionType.DISLIKE)
+//                .reactedAt(Instant.now())
+//                .build()
+//        ));
 
-    reactionPersistenceRepository.findByIncidentId(incidentId)
-        .ifPresentOrElse(existing -> {
-          if (existing.getReactionType() != ReactionType.DISLIKE) {
-            existing.setReactionType(ReactionType.DISLIKE);
-            existing.setReactedAt(Instant.now());
-          }
-        }, () -> reactionPersistenceRepository.save(
-            ReactionEntity.builder()
-                .incident(incident)
-                .reactionType(ReactionType.DISLIKE)
-                .reactedAt(Instant.now())
-                .build()
-        ));
-
-    return summary;
+//    return summary;
+    return null;
   }
 
   /**
@@ -132,19 +134,20 @@ public class IncidentReactionRepository implements ReactionRepository {
   @Override
   @Transactional
   public ReactionSummary removeLike(long incidentId, String userId) {
-    ReactionSummary summary = execute(incidentId, userId, "REMOVE_LIKE");
-
-//    ClientEntity client = clientRepository.findByExternalId(userId)
-//        .orElseThrow(() -> new IllegalArgumentException("Unknown client " + userId));
-
-    reactionPersistenceRepository.findByIncidentId(incidentId)
-        .ifPresent(existing -> {
-          if (existing.getReactionType() == ReactionType.LIKE) {
-            reactionPersistenceRepository.delete(existing);
-          }
-        });
-
-    return summary;
+//    ReactionSummary summary = execute(incidentId, userId, "REMOVE_LIKE");
+//
+////    ClientEntity client = clientRepository.findByExternalId(userId)
+////        .orElseThrow(() -> new IllegalArgumentException("Unknown client " + userId));
+//
+//    reactionPersistenceRepository.findByIncidentId(incidentId)
+//        .ifPresent(existing -> {
+//          if (existing.getReactionType() == ReactionType.LIKE) {
+//            reactionPersistenceRepository.delete(existing);
+//          }
+//        });
+//
+//    return summary;
+    return null;
   }
 
   /**
@@ -153,19 +156,20 @@ public class IncidentReactionRepository implements ReactionRepository {
   @Override
   @Transactional
   public ReactionSummary removeDislike(long incidentId, String userId) {
-    ReactionSummary summary = execute(incidentId, userId, "REMOVE_DISLIKE");
-
-//    ClientEntity client = clientRepository.findByExternalId(userId)
-//        .orElseThrow(() -> new IllegalArgumentException("Unknown client " + userId));
-
-    reactionPersistenceRepository.findByIncidentId(incidentId)
-        .ifPresent(existing -> {
-          if (existing.getReactionType() == ReactionType.DISLIKE) {
-            reactionPersistenceRepository.delete(existing);
-          }
-        });
-
-    return summary;
+//    ReactionSummary summary = execute(incidentId, userId, "REMOVE_DISLIKE");
+//
+////    ClientEntity client = clientRepository.findByExternalId(userId)
+////        .orElseThrow(() -> new IllegalArgumentException("Unknown client " + userId));
+//
+//    reactionPersistenceRepository.findByIncidentId(incidentId)
+//        .ifPresent(existing -> {
+//          if (existing.getReactionType() == ReactionType.DISLIKE) {
+//            reactionPersistenceRepository.delete(existing);
+//          }
+//        });
+//
+//    return summary;
+    return null;
   }
 
   /**
@@ -181,25 +185,26 @@ public class IncidentReactionRepository implements ReactionRepository {
    * Executes the Lua script that coordinates reaction mutations and returns updated counters.
    */
   private ReactionSummary execute(long incidentId, String userId, String action) {
-    List<String> keys = List.of(
-        keyBuilder.likesKey(incidentId),
-        keyBuilder.dislikesKey(incidentId)
-    );
-
-    @SuppressWarnings("unchecked")
-    List<Long> raw =
-        (List<Long>) redisTemplate.execute(REACTION_SCRIPT, keys, userId, action);
-
-    if (raw.size() != 3) {
-      throw new IllegalStateException("Unexpected Redis response for incident " + incidentId);
-    }
-
-    ReactionType reactionType = ReactionType.fromToken(raw.get(2));
-    return new ReactionSummary(
-        incidentId,
-        raw.get(0).intValue(),
-        raw.get(1).intValue(),
-        reactionType
-    );
+//    List<String> keys = List.of(
+//        keyBuilder.likesKey(incidentId),
+//        keyBuilder.dislikesKey(incidentId)
+//    );
+//
+//    @SuppressWarnings("unchecked")
+//    List<Long> raw =
+//        (List<Long>) redisTemplate.execute(REACTION_SCRIPT, keys, userId, action);
+//
+//    if (raw.size() != 3) {
+//      throw new IllegalStateException("Unexpected Redis response for incident " + incidentId);
+//    }
+//
+//    ReactionType reactionType = ReactionType.fromToken(raw.get(2));
+//    return new ReactionSummary(
+//        incidentId,
+//        raw.get(0).intValue(),
+//        raw.get(1).intValue(),
+//        reactionType
+//    );
+    return null;
   }
 }
