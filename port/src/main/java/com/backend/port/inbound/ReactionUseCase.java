@@ -1,5 +1,6 @@
 package com.backend.port.inbound;
 
+import com.backend.port.inbound.commands.ReactToIncidentCommand;
 import com.backend.port.inbound.commands.ReactionSummary;
 
 /**
@@ -10,31 +11,38 @@ import com.backend.port.inbound.commands.ReactionSummary;
  */
 public interface ReactionUseCase {
 
-    /**
-     * Adds a like reaction.
-     *
-     * @return the updated reaction summary
-     */
-    ReactionSummary addLike();
+  /**
+   * Adds a like reaction.
+   *
+   * @return the updated reaction summary
+   */
+  ReactionSummary addLike(ReactToIncidentCommand command);
 
-    /**
-     * Adds a dislike reaction.
-     *
-     * @return the updated reaction summary
-     */
-    ReactionSummary addDislike();
+  /**
+   * Adds a dislike reaction.
+   *
+   * @return the updated reaction summary
+   */
+  ReactionSummary addDislike(ReactToIncidentCommand command);
 
-    /**
-     * Removes a like reaction.
-     *
-     * @return the updated reaction summary
-     */
-    ReactionSummary removeLike();
+  /**
+   * Removes a like reaction.
+   *
+   * @return the updated reaction summary
+   */
+  ReactionSummary removeLike(ReactToIncidentCommand command);
 
-    /**
-     * Removes a dislike reaction.
-     *
-     * @return the updated reaction summary
-     */
-    ReactionSummary removeDislike();
+  /**
+   * Removes a dislike reaction.
+   *
+   * @return the updated reaction summary
+   */
+  ReactionSummary removeDislike(ReactToIncidentCommand command);
+
+  /**
+   * Retrieves the reaction summary.
+   *
+   * @return the reaction summary
+   */
+  ReactionSummary getSummary(ReactToIncidentCommand command);
 }
