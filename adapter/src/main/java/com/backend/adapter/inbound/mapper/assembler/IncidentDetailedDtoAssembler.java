@@ -46,10 +46,10 @@ public class IncidentDetailedDtoAssembler {
       builder.lat(location.latitude()).lon(location.longitude()).address(location.address());
     }
 
-    var summary = reactionUseCase.getSummary(new ReactToIncidentCommand(incident.getId(), null));
-    builder
-        .like(summary.likes())
-        .dislike(summary.dislikes());
+//    var summary = reactionUseCase.getSummary(new ReactToIncidentCommand(incident.getId(), null));
+//    builder
+//        .like(summary.likes())
+//        .dislike(summary.dislikes());
 
     return builder.build();
   }
