@@ -35,7 +35,7 @@ public class IncidentEntity {
 
   @ManyToOne
   @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "FK_HAPPENING_CLIENT"))
-  private ClientEntity client;
+  private UserEntity client;
 
   private Instant timePosted;
   private double range;

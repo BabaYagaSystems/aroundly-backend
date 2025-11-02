@@ -68,7 +68,7 @@ public interface IncidentUseCase {
      * @param incidentId the identifier of the incident
      * @return the updated incident with extended lifespan
      */
-    Incident confirm(long incidentId);
+    Incident confirm(long incidentId, long userId);
 
     /**
      * Registers a denial for the given incident.
@@ -80,7 +80,7 @@ public interface IncidentUseCase {
      * @param incidentId the unique identifier of the incident
      * @return the updated {@link Incident} after the denial has been applied
      */
-    Incident deny(long incidentId);
+    Incident deny(long incidentId, long userId);
 
     /**
      * Deletes the given incident if it has expired.

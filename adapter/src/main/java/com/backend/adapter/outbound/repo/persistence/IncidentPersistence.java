@@ -90,7 +90,7 @@ public class IncidentPersistence implements IncidentRepository {
     private Incident toDomainIncident(IncidentEntity entity) {
         return Incident.builder()
                 .id(entity.getId())
-                .actorId(new ActorId("abc"))
+//                .actorId(entity.getClient().getId())
                 .locationId(new LocationId(entity.getLocation().getId()))
                 .media(entity.getMedia().stream()
                         .map(mediaEntityMapper::toDomain)

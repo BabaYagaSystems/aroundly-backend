@@ -41,7 +41,7 @@ public class IncidentDtoAssemblerTest {
     mediaDto = new MediaDto("file");
     media = new Media(3L, "file", "type");
     incident = Incident.builder()
-      .actorId(new ActorId("abc-123"))
+      .actorId(1L)
       .locationId(new LocationId(202L))
       .title("title")
       .description("description")

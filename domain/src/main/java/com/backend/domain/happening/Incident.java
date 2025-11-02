@@ -31,7 +31,7 @@ import lombok.NonNull;
 public class Incident implements Expirable, Actored, Locatable, HasMedia, Reactable {
 
   private final long id;
-  private final ActorId actorId;
+  private final long actorId;
   private final LocationId locationId;
   private final SentimentEngagement sentimentEngagement;
   private final Set<Media> media;
@@ -69,7 +69,7 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
   @Builder(toBuilder = true)
   public Incident(
       long id,
-      ActorId actorId,
+      long actorId,
       LocationId locationId,
       String title,
       String description,

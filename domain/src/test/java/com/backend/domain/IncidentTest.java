@@ -27,7 +27,7 @@ public class IncidentTest {
   @BeforeEach
   void setup() throws URISyntaxException {
     incident = Incident.builder()
-            .actorId(new ActorId("id"))
+            .actorId(1L)
             .locationId(new LocationId(1L))
             .title("title")
             .description("description")

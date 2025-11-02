@@ -180,7 +180,7 @@ public class IncidentController {
   })
   public ResponseEntity<IncidentPreviewResponseDto> getIncidentInPreview(@PathVariable long id) {
     try {
-      Incident incident = (Incident) incidentUseCase.findById(id);
+      Incident incident = incidentUseCase.findById(id);
       IncidentPreviewResponseDto incidentPreviewResponseDto =
           incidentPreviewDtoAssembler.toPreviewDto(incident);
 
@@ -304,10 +304,14 @@ public class IncidentController {
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already confirmed")
   })
-  public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(@PathVariable long id) {
+  public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(
+      @PathVariable long id,
+      @RequestHeader("Authorization") String authHeader) {
 
     try {
-      Incident incident = incidentUseCase.confirm(id);
+      FirebaseUserInfo firebaseUserInfo = authenticate(authHeader);
+
+      Incident incident = incidentUseCase.confirm(id, userSyncService.getOrCreateUser(firebaseUserInfo).getId());
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
@@ -317,6 +321,9 @@ public class IncidentController {
     } catch (IncidentAlreadyConfirmedException e) {
       log.warn("IncidentEntity already confirmed: {}", id);
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    } catch (AuthenticationException e) {
+      log.warn("Authentication failed while confirming incident {}: {}", id, e.getMessage());
+      return ResponseEntity.notFound().build();
     }
   }
 
@@ -336,9 +343,12 @@ public class IncidentController {
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already denied")
   })
-  public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(@PathVariable long id) {
+  public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(
+      @PathVariable long id,
+      @RequestHeader("Authorization") String authHeader) {
     try {
-      Incident incident = incidentUseCase.deny(id);
+      FirebaseUserInfo firebaseUserInfo = authenticate(authHeader);
+      Incident incident = incidentUseCase.deny(id, userSyncService.getOrCreateUser(firebaseUserInfo).getId());
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
@@ -348,6 +358,9 @@ public class IncidentController {
     } catch (IncidentAlreadyConfirmedException e) {
       log.warn("IncidentEntity already denied: {}", id);
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    } catch (AuthenticationException e) {
+      log.warn("Authentication failed while confirming incident {}: {}", id, e.getMessage());
+      return ResponseEntity.notFound().build();
     }
   }
 
@@ -405,5 +418,13 @@ public class IncidentController {
       log.warn("IncidentEntity not found for deletion: {}", id);
       return ResponseEntity.notFound().build();
     }
+  }
+
+  private FirebaseUserInfo authenticate(String authHeader) throws AuthenticationException {
+    String token = firebaseTokenValidator.extractToken(authHeader)
+        .orElseThrow(() -> new AuthenticationException("Missing or malformed Authorization header"));
+
+    return firebaseTokenValidator.validateToken(token)
+        .orElseThrow(() -> new AuthenticationException("Invalid Firebase token"));
   }
 }
