@@ -12,6 +12,7 @@ import java.util.Set;
  * @param lon         the longitude where the incident occurred
  */
 public record CreateIncidentCommand(
+//        Long id,
     String title,
     String description,
     Set<UploadMediaCommand> media,

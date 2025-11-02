@@ -187,6 +187,7 @@ buildNumber.properties
 **/application.properties
 **/dev-shared.properties
 **/aroundly-9e6d8-firebase-adminsdk-fbsvc-dd4ac80108.json
+**/aroundly-5c094-120456bfee62.json
 
 # Zed
 .factorypath

@@ -14,11 +14,15 @@ import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfir
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
+import com.backend.adapter.outbound.repo.persistence.UserSyncService;
+import com.backend.domain.actor.FirebaseUserInfo;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
+import com.backend.services.FirebaseTokenValidator;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,15 +35,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import javax.naming.AuthenticationException;
 
 /**
  * REST controller exposing CRUD and query endpoints for {@link Incident} resources.
@@ -90,11 +88,23 @@ public class IncidentController {
       @ApiResponse(responseCode = "409", description = "IncidentEntity already exists")
   })
   public ResponseEntity<IncidentDetailedResponseDto> create(
+          @RequestHeader("Authorization") String authHeader,
       @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
 
     try {
+
+//      FirebaseTokenValidator firebaseTokenValidator;
+//      UserSyncService userSyncService;
+//
+//
+//      String token = firebaseTokenValidator.extractToken(authHeader).orElseThrow(() -> new AuthenticationException("Invalid token"));
+//
+//      FirebaseUserInfo firebaseUserInfo = firebaseTokenValidator.validateToken(token).orElseThrow();
+
       CreateIncidentCommand createIncidentCommand = incidentMapper
           .toCreateIncidentCommand(incidentRequestDto);
+//
+//      createIncidentCommand.id(userSyncService.getOrCreateUser(firebaseUserInfo).getId());
 
       Incident incident = incidentUseCase.create(createIncidentCommand);
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);

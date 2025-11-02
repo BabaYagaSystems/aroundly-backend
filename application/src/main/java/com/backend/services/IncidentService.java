@@ -144,7 +144,7 @@ public class IncidentService implements IncidentUseCase {
         .media(uploadedMedia)
         .build();
 
-      return incidentRepository.save(incident);
+       return incidentRepository.save(incident);
 
         } catch (ActorNotFoundException | LocationNotFoundException e) {
           throw e;

@@ -1,6 +1,7 @@
 package com.backend.services;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import jakarta.validation.executable.ValidateOnExecution;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -10,18 +11,24 @@ import org.json.JSONObject;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 
 import java.io.FileInputStream;
 
-public class FirebaseTokenGenerator {
+@Component
+public final class FirebaseTokenGenerator {
 
     private static final String SERVICE_ACCOUNT_PATH =
-            "infra/src/main/resources/aroundly-9e6d8-firebase-adminsdk-fbsvc-dd4ac80108.json";
+            "infra/src/main/resources/aroundly-5c094-120456bfee62.json";
 
-    // Replace with your Firebase Web API key from the web app config
-    private static final String FIREBASE_WEB_API_KEY =
-            "AIzaSyCyrDvKNZRQbssFg1jbpPIuvT8TRqO6dYg";
+    @Value("${firebase-api-key}")
+    private static String apiKey;
+
+    private FirebaseTokenGenerator() {
+
+    }
 
     /**
      * Generates a Firebase ID token for the given UID.
@@ -50,7 +57,7 @@ public class FirebaseTokenGenerator {
                     body.toString(), MediaType.parse("application/json"));
 
             Request request = new Request.Builder()
-                    .url("https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=" + FIREBASE_WEB_API_KEY)
+                    .url("https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=" + apiKey)
                     .post(requestBody)
                     .build();
 
