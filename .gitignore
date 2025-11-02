@@ -192,3 +192,5 @@ buildNumber.properties
 # Zed
 .factorypath
 .settings
+
+**/infra/src/test/java/FirebaseTokenGenerator.java

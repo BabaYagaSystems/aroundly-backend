@@ -23,8 +23,8 @@ public interface IncidentMapper {
    * @return command object to create an incident
    */
 
-  @Mapping(
-      target = "media", source = "files")
+  @Mapping(target = "actorId", ignore = true)
+  @Mapping(target = "media", source = "files")
   CreateIncidentCommand toCreateIncidentCommand(IncidentRequestDto incidentRequestDto);
 
   /**

@@ -1,6 +1,8 @@
 package com.backend.port.inbound.commands;
 
+import com.backend.domain.actor.ActorId;
 import java.util.Set;
+import lombok.Builder;
 
 /**
  * Command object used for creating a new Incident.
@@ -11,8 +13,9 @@ import java.util.Set;
  * @param lat         the latitude where the incident occurred
  * @param lon         the longitude where the incident occurred
  */
+@Builder(toBuilder = true)
 public record CreateIncidentCommand(
-//        Long id,
+    long actorId,
     String title,
     String description,
     Set<UploadMediaCommand> media,

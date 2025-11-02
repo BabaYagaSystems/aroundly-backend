@@ -22,14 +22,15 @@ import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
 import com.backend.services.FirebaseTokenValidator;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,19 +57,24 @@ public class IncidentController {
   private final IncidentMapper incidentMapper;
   private final LocationMapper locationMapper;
   private final IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
+  private final UserSyncService userSyncService;
+  private final FirebaseTokenValidator firebaseTokenValidator;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
       IncidentDetailedDtoAssembler incidentDetailedResponseAssembler,
       IncidentMapper incidentMapper,
       LocationMapper locationMapper,
-      IncidentPreviewDtoAssembler incidentPreviewDtoAssembler) {
+      IncidentPreviewDtoAssembler incidentPreviewDtoAssembler, UserSyncService userSyncService,
+      FirebaseTokenValidator firebaseTokenValidator) {
 
     this.incidentUseCase = incidentUseCase;
     this.incidentMapper = incidentMapper;
     this.incidentDetailedResponseAssembler = incidentDetailedResponseAssembler;
     this.locationMapper = locationMapper;
     this.incidentPreviewDtoAssembler = incidentPreviewDtoAssembler;
+    this.userSyncService = userSyncService;
+    this.firebaseTokenValidator = firebaseTokenValidator;
   }
 
   /**
@@ -87,24 +93,22 @@ public class IncidentController {
       @ApiResponse(responseCode = "400", description = "Invalid input data"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already exists")
   })
+  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<IncidentDetailedResponseDto> create(
-          @RequestHeader("Authorization") String authHeader,
+      @RequestHeader("Authorization") String authHeader,
       @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
 
     try {
 
-//      FirebaseTokenValidator firebaseTokenValidator;
-//      UserSyncService userSyncService;
-//
-//
-//      String token = firebaseTokenValidator.extractToken(authHeader).orElseThrow(() -> new AuthenticationException("Invalid token"));
-//
-//      FirebaseUserInfo firebaseUserInfo = firebaseTokenValidator.validateToken(token).orElseThrow();
+      Optional<String> token = firebaseTokenValidator.extractToken(authHeader);
+      FirebaseUserInfo firebaseUserInfo = firebaseTokenValidator.validateToken(token.get()).orElseThrow();
 
       CreateIncidentCommand createIncidentCommand = incidentMapper
           .toCreateIncidentCommand(incidentRequestDto);
-//
-//      createIncidentCommand.id(userSyncService.getOrCreateUser(firebaseUserInfo).getId());
+
+      createIncidentCommand.toBuilder()
+          .actorId(userSyncService.getOrCreateUser(firebaseUserInfo).getId())
+          .build();
 
       Incident incident = incidentUseCase.create(createIncidentCommand);
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
