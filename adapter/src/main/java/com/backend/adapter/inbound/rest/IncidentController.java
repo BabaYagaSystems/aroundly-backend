@@ -93,22 +93,22 @@ public class IncidentController {
       @ApiResponse(responseCode = "400", description = "Invalid input data"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already exists")
   })
-  @SecurityRequirement(name = "bearerAuth")
+//  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<IncidentDetailedResponseDto> create(
-      @RequestHeader("Authorization") String authHeader,
+//      @RequestHeader("Authorization") String authHeader,
       @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
 
     try {
 
-      Optional<String> token = firebaseTokenValidator.extractToken(authHeader);
-      FirebaseUserInfo firebaseUserInfo = firebaseTokenValidator.validateToken(token.get()).orElseThrow();
+//      Optional<String> token = firebaseTokenValidator.extractToken(authHeader);
+//      FirebaseUserInfo firebaseUserInfo = firebaseTokenValidator.validateToken(token.get()).orElseThrow();
 
       CreateIncidentCommand createIncidentCommand = incidentMapper
           .toCreateIncidentCommand(incidentRequestDto);
 
-      createIncidentCommand.toBuilder()
-          .actorId(userSyncService.getOrCreateUser(firebaseUserInfo).getId())
-          .build();
+//      createIncidentCommand.toBuilder()
+//          .actorId(userSyncService.getOrCreateUser(firebaseUserInfo).getId())
+//          .build();
 
       Incident incident = incidentUseCase.create(createIncidentCommand);
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
