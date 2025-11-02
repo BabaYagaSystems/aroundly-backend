@@ -82,7 +82,7 @@ class IncidentControllerTest {
     when(incidentDetailedDtoAssembler.toDetailedDto(incident)).thenReturn(incidentDetailedResponseDto);
 
     // TODO: fix the test
-    final ResponseEntity<IncidentDetailedResponseDto> response = controller.create(incidentRequestDto);
+    final ResponseEntity<IncidentDetailedResponseDto> response = controller.create("da", incidentRequestDto);
 
     final IncidentDetailedResponseDto body = response.getBody();
 
