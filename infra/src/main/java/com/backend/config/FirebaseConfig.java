@@ -4,6 +4,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import jakarta.annotation.PostConstruct;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -29,10 +31,23 @@ public class FirebaseConfig {
         try {
             if (FirebaseApp.getApps().isEmpty()) {
                 // Try to load from classpath (resources folder)
-                InputStream serviceAccount = new ClassPathResource(serviceAccountFile).getInputStream();
+//                InputStream serviceAccount = new ClassPathResource(serviceAccountFile).getInputStream();
 
-                FirebaseOptions options = FirebaseOptions.builder()
-                        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+              InputStream serviceAccountStream;
+
+              if (serviceAccountFile.trim().startsWith("{")) {
+                log.info("Initializing Firebase using JSON from environment variable...");
+                serviceAccountStream =
+                    new ByteArrayInputStream(serviceAccountFile.getBytes(StandardCharsets.UTF_8));
+              } else {
+                // 🔹 Otherwise, treat it as a classpath file (for local dev)
+                log.info("Initializing Firebase using file from classpath: {}", serviceAccountFile);
+                serviceAccountStream = new ClassPathResource(serviceAccountFile).getInputStream();
+              }
+
+
+              FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(GoogleCredentials.fromStream(serviceAccountStream))
                         .build();
 
                 FirebaseApp.initializeApp(options);
