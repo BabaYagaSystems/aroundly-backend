@@ -20,7 +20,6 @@ import com.backend.adapter.inbound.mapper.assembler.IncidentDetailedDtoAssembler
 import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
-import com.backend.domain.actor.ActorId;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
@@ -156,7 +155,7 @@ class IncidentControllerTest {
   @Test
   void testFindActorIncidentsInPreview() throws IOException {
     final List<Incident> incidents = List.of(createIncident());
-    when(incidentUseCase.findByActorId(ACTOR_ID)).thenReturn(incidents);
+    when(incidentUseCase.findByUserId(ACTOR_ID)).thenReturn(incidents);
     when(incidentPreviewDtoAssembler.toPreviewDto(any(Incident.class)))
         .thenReturn(createIncidentPreviewResponseDto());
 

@@ -72,11 +72,11 @@ class IncidentServiceTest {
     }
 
     @Test
-    void testFindByActorId() {
+    void testFindByUserId() {
         final ActorId actorId = new ActorId("abc-123");
         when(incidentRepository.findByUserId(actorId.id())).thenReturn(List.of(incident));
 
-        List<Incident> result = incidentService.findByActorId(actorId.id());
+        List<Incident> result = incidentService.findByUserId(actorId.id());
 
         assertEquals(result, List.of(incident));
     }

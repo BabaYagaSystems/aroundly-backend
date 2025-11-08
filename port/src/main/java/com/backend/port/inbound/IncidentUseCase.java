@@ -31,7 +31,7 @@ public interface IncidentUseCase {
      * @param actorId the identifier of the actor
      * @return the list of Happenings by the actor
      */
-    List<Incident> findByActorId(String actorId);
+    List<Incident> findByUserId(String actorId);
 
     /**
      * Finds all incidents within a given geographic radius.

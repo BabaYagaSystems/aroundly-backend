@@ -243,7 +243,7 @@ public class IncidentController {
       @PathVariable String id) {
 
     try {
-      List<Incident> incidents = incidentUseCase.findByActorId(id);
+      List<Incident> incidents = incidentUseCase.findByUserId(id);
       List<IncidentPreviewResponseDto> incidentPreviewResponseDtos = incidents.stream()
           .map(incidentPreviewDtoAssembler::toPreviewDto)
           .toList();

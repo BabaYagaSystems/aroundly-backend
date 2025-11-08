@@ -43,7 +43,7 @@ public final class IncidentMapper {
   public Incident mapToDomain(IncidentEntity entity) {
     return Incident.builder()
       .id(entity.getId())
-      .actorId(new ActorId("abc"))
+      .actorId(1L)
       .locationId(new LocationId(entity.getLocation().getId()))
       .media(entity.getMedia().stream()
           .map(mediaEntityMapper::toDomain)

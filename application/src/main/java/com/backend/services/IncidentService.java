@@ -53,7 +53,7 @@ public class IncidentService implements IncidentUseCase {
      * @throws InvalidCoordinatesException if coordinates or radius are invalid
      */
     @Override
-    public List<Incident> findAllInGivenRange(RadiusCommand radiusCommand)
+    public List<Incident> findAllInGivenRange(final RadiusCommand radiusCommand)
             throws InvalidCoordinatesException {
 
         final double userLatitude = radiusCommand.lat();
@@ -78,7 +78,7 @@ public class IncidentService implements IncidentUseCase {
      * @throws IllegalArgumentException if actorId is null or empty
      */
     @Override
-    public List<Incident> findByActorId(String actorId) {
+    public List<Incident> findByUserId(final String actorId) {
         if (actorId == null || actorId.trim().isEmpty())
             throw new IllegalArgumentException("Actor ID cannot be null or empty");
 
@@ -93,7 +93,7 @@ public class IncidentService implements IncidentUseCase {
      * @throws IncidentNotFoundException if not found
      */
     @Override
-    public Incident findById(long id) throws IncidentNotFoundException {
+    public Incident findById(final long id) throws IncidentNotFoundException {
         if (id <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         return incidentRepository.findById(id)
@@ -111,12 +111,13 @@ public class IncidentService implements IncidentUseCase {
      * @throws DuplicateIncidentException if similar incident already exists
      */
     @Override
-    public Incident create(CreateIncidentCommand createIncidentCommand) throws
+    public Incident create(final CreateIncidentCommand createIncidentCommand) throws
             ValidationException, LocationNotFoundException, ActorNotFoundException, DuplicateIncidentException {
 
         validateCreateIncidentCommand(createIncidentCommand);
 
         try {
+          final long actorId = createIncidentCommand.actorId();
           final String title = createIncidentCommand.title();
           final String description = createIncidentCommand.description();
           final Set<UploadMediaCommand> media = createIncidentCommand.media();
@@ -128,8 +129,8 @@ public class IncidentService implements IncidentUseCase {
           final LocationId locationId = location.id();
           final Set<Media> uploadedMedia = objectStoragePort.uploadAll(media);
 
-          Incident incident = Incident.builder()
-              .actorId(createIncidentCommand.actorId())
+          final Incident incident = Incident.builder()
+              .actorId(actorId)
               .locationId(locationId)
               .title(title)
               .description(description)
@@ -157,7 +158,7 @@ public class IncidentService implements IncidentUseCase {
      * @throws ClassCastException        if the found happening is not an Incident
      */
     @Override
-    public Incident update(long id, CreateIncidentCommand createIncidentCommand)
+    public Incident update(final long id, final CreateIncidentCommand createIncidentCommand)
             throws IncidentNotFoundException, ValidationException {
 
       if (id <= 0) throw new IllegalArgumentException("Incident ID must be positive");
@@ -171,7 +172,7 @@ public class IncidentService implements IncidentUseCase {
 
         final Set<Media> uploadUpdatedMedia = objectStoragePort.uploadAll(updatedMedia);
 
-        Incident updatedExistingOldIncident = existingIncident.toBuilder()
+        final Incident updatedExistingOldIncident = existingIncident.toBuilder()
           .title(updatedTitle)
           .description(updatedDescription)
           .media(uploadUpdatedMedia)
@@ -197,24 +198,22 @@ public class IncidentService implements IncidentUseCase {
      * @throws IncidentAlreadyConfirmedException if the incident is already confirmed
      */
     @Override
-    public Incident confirm(long incidentId, long userId)
+    public Incident confirm(final long incidentId, final long userId)
             throws IncidentNotFoundException, IncidentAlreadyConfirmedException {
 
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         try {
-          Incident incident = findById(incidentId);
-          incident.confirmIncident();
-            Incident incident = findById(incidentId);
-            incidentEngagementRepository.findUserEngagement(incidentId, userId)
-                .ifPresent(existing -> {
-                  if (existing == IncidentEngagementType.CONFIRM) {
-                    throw new IncidentAlreadyConfirmedException(
-                        "User has already confirmed incident " + incidentId);
-                  }
-                  throw new IncidentAlreadyDeniedException(
-                      "User has already denied incident " + incidentId);
-                });
+          final Incident incident = findById(incidentId);
+          incidentEngagementRepository.findUserEngagement(incidentId, userId)
+              .ifPresent(existing -> {
+                if (existing == IncidentEngagementType.CONFIRM) {
+                  throw new IncidentAlreadyConfirmedException(
+                      "User has already confirmed incident " + incidentId);
+                }
+                throw new IncidentAlreadyDeniedException(
+                    "User has already denied incident " + incidentId);
+              });
 
             incident.confirmIncident();
             incidentEngagementRepository.saveEngagement(incidentId, userId, IncidentEngagementType.CONFIRM);
@@ -241,13 +240,13 @@ public class IncidentService implements IncidentUseCase {
      * @throws IncidentAlreadyDeniedException if the incident is already denied
      */
     @Override
-    public Incident deny(long incidentId, long userId)
+    public Incident deny(final long incidentId, final long userId)
             throws IncidentNotFoundException, IncidentAlreadyDeniedException {
 
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         try {
-            Incident incident = findById(incidentId);
+            final Incident incident = findById(incidentId);
             incidentEngagementRepository.findUserEngagement(incidentId, userId)
                 .ifPresent(existing -> {
                   if (existing == IncidentEngagementType.DENY) {
@@ -280,13 +279,13 @@ public class IncidentService implements IncidentUseCase {
      * @throws IncidentNotExpiredException if the incident is not expired/deleted
      */
     @Override
-    public void deleteIfExpired(long incidentId)
+    public void deleteIfExpired(final long incidentId)
             throws IncidentNotFoundException, IncidentNotExpiredException {
 
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         try {
-            Incident incident = findById(incidentId);
+            final Incident incident = findById(incidentId);
             if (incident.isDeleted()) {
                 incidentRepository.deleteById(incidentId);
             } else {
@@ -309,7 +308,7 @@ public class IncidentService implements IncidentUseCase {
      * @throws IncidentNotFoundException if the incident is not found
      */
     @Override
-    public void deleteById(long incidentId) throws IncidentNotExpiredException {
+    public void deleteById(final long incidentId) throws IncidentNotExpiredException {
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         if (!incidentRepository.existsById(incidentId))
@@ -322,7 +321,7 @@ public class IncidentService implements IncidentUseCase {
         }
     }
 
-    private void validateCreateIncidentCommand(CreateIncidentCommand command) throws ValidationException {
+    private void validateCreateIncidentCommand(final CreateIncidentCommand command) throws ValidationException {
         if (command == null) {
             throw new ValidationException("Create incident command cannot be null");
         }
