@@ -1,6 +1,5 @@
 package com.backend.services;
 
-import com.backend.domain.actor.ActorId;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
@@ -115,38 +114,29 @@ public class IncidentService implements IncidentUseCase {
     public Incident create(CreateIncidentCommand createIncidentCommand) throws
             ValidationException, LocationNotFoundException, ActorNotFoundException, DuplicateIncidentException {
 
-        final double longitude = createIncidentCommand.lon();
-        final double latitude = createIncidentCommand.lat();
-
         validateCreateIncidentCommand(createIncidentCommand);
 
         try {
           final String title = createIncidentCommand.title();
           final String description = createIncidentCommand.description();
           final Set<UploadMediaCommand> media = createIncidentCommand.media();
-          final Location location;
+          final double longitude = createIncidentCommand.lon();
+          final double latitude = createIncidentCommand.lat();
+          final CoordinatesCommand coordinatesCommand = new CoordinatesCommand(latitude, longitude);
 
-          try {
-              CoordinatesCommand coordinatesCommand = new CoordinatesCommand(latitude, longitude);
-              location = locationService.findByCoordinates(coordinatesCommand);
-          } catch (RuntimeException e) {
-              throw new LocationNotFoundException(
-                      String.format("Location not found for coordinates: lat=%f, lon=%f",
-                              createIncidentCommand.lat(), createIncidentCommand.lon()),
-                      e);
-        }
-      final LocationId locationId = location.id();
-      final Set<Media> uploadedMedia = objectStoragePort.uploadAll(media);
+          final Location location = locationService.findByCoordinates(coordinatesCommand);
+          final LocationId locationId = location.id();
+          final Set<Media> uploadedMedia = objectStoragePort.uploadAll(media);
 
-      Incident incident = Incident.builder()
-        .actorId(createIncidentCommand.actorId())
-        .locationId(locationId)
-        .title(title)
-        .description(description)
-        .media(uploadedMedia)
-        .build();
+          Incident incident = Incident.builder()
+              .actorId(createIncidentCommand.actorId())
+              .locationId(locationId)
+              .title(title)
+              .description(description)
+              .media(uploadedMedia)
+              .build();
 
-       return incidentRepository.save(incident);
+          return incidentRepository.save(incident);
 
         } catch (ActorNotFoundException | LocationNotFoundException e) {
           throw e;
@@ -213,6 +203,8 @@ public class IncidentService implements IncidentUseCase {
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         try {
+          Incident incident = findById(incidentId);
+          incident.confirmIncident();
             Incident incident = findById(incidentId);
             incidentEngagementRepository.findUserEngagement(incidentId, userId)
                 .ifPresent(existing -> {
@@ -227,7 +219,7 @@ public class IncidentService implements IncidentUseCase {
             incident.confirmIncident();
             incidentEngagementRepository.saveEngagement(incidentId, userId, IncidentEngagementType.CONFIRM);
 
-            return incidentRepository.save(incident);
+          return incidentRepository.save(incident);
 
         } catch (IncidentNotFoundException | IncidentAlreadyConfirmedException e) {
             throw e;
