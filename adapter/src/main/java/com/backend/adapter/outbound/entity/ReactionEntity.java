@@ -32,8 +32,8 @@ public class ReactionEntity {
     private CommentEntity comment;
 
     @ManyToOne
-    @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "FK_REACTION_CLIENT"))
-    private ClientEntity client;
+    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "FK_REACTION_USER"))
+    private UserEntity user;
 
     @Enumerated(EnumType.STRING)
     private ReactionType reactionType;

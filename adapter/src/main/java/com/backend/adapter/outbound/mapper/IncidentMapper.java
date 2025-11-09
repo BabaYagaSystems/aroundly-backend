@@ -4,7 +4,7 @@ import com.backend.adapter.outbound.entity.IncidentEntity;
 import com.backend.adapter.outbound.entity.LocationEntity;
 import com.backend.adapter.outbound.entity.UserEntity;
 import com.backend.adapter.outbound.repo.LocationPersistenceRepository;
-import com.backend.adapter.outbound.repo.UserRepository;
+import com.backend.adapter.outbound.repo.UserPersistenceRepository;
 import com.backend.domain.actor.ActorId;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.LocationId;
@@ -19,7 +19,7 @@ public final class IncidentMapper {
 
   private final MediaEntityMapper mediaEntityMapper;
   private final LocationPersistenceRepository locationPersistenceRepository;
-  private final UserRepository userRepository;
+  private final UserPersistenceRepository userPersistenceRepository;
 
 
   public IncidentEntity mapToEntity(Incident domain) {
@@ -28,7 +28,7 @@ public final class IncidentMapper {
 
     IncidentEntity incidentEntity = IncidentEntity.builder()
       .id(domain.getId())
-      .client(userEntity)
+      .user(userEntity)
       .title(domain.getTitle())
       .description(domain.getDescription())
       .location(locationEntity)
@@ -49,7 +49,7 @@ public final class IncidentMapper {
   public Incident mapToDomain(IncidentEntity entity) {
     return Incident.builder()
       .id(entity.getId())
-      .actorId(new ActorId(entity.getClient().getFirebaseUid()))
+      .actorId(new ActorId(entity.getUser().getFirebaseUid()))
       .locationId(new LocationId(entity.getLocation().getId()))
       .media(entity.getMedia().stream()
           .map(mediaEntityMapper::toDomain)
@@ -71,7 +71,7 @@ public final class IncidentMapper {
   }
 
   private UserEntity findUserByIncidentDomain(Incident incident) {
-    return userRepository
+    return userPersistenceRepository
         .findByFirebaseUid(incident.getActorId().value())
         .orElseThrow(() -> new IllegalStateException("User not found"));
   }
