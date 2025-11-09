@@ -1,6 +1,8 @@
 package com.backend.services;
 
-import com.backend.domain.actor.FirebaseUserInfo;
+import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.User;
+import lombok.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -19,11 +21,11 @@ public class AuthenticatedUserService {
      *
      * @return Optional containing FirebaseUserInfo if user is authenticated, empty otherwise
      */
-    public Optional<FirebaseUserInfo> getCurrentUser() {
+    public Optional<User> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof FirebaseUserInfo userInfo) {
+                && authentication.getPrincipal() instanceof User userInfo) {
             return Optional.of(userInfo);
         }
 
@@ -35,8 +37,8 @@ public class AuthenticatedUserService {
      *
      * @return Optional containing the user's UID if authenticated, empty otherwise
      */
-    public Optional<String> getCurrentUserId() {
-        return getCurrentUser().map(FirebaseUserInfo::uid);
+    public Optional<@NonNull ActorId> getCurrentUserId() {
+        return getCurrentUser().map(User::uid);
     }
 
     /**
@@ -55,7 +57,7 @@ public class AuthenticatedUserService {
      * @return FirebaseUserInfo of the authenticated user
      * @throws IllegalStateException if no user is authenticated
      */
-    public FirebaseUserInfo requireCurrentUser() {
+    public User requireCurrentUser() {
         return getCurrentUser()
                 .orElseThrow(() -> new IllegalStateException("No authenticated user found"));
     }

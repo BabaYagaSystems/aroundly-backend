@@ -3,7 +3,7 @@ package com.backend.adapter.outbound.repo.persistence;
 import com.backend.adapter.outbound.entity.UserEntity;
 import com.backend.adapter.outbound.repo.UserPersistenceRepository;
 import com.backend.domain.actor.Role;
-import com.backend.domain.actor.FirebaseUserInfo;
+import com.backend.domain.actor.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,8 +31,8 @@ public class UserSyncService {
      * @return the user entity from the database
      */
     @Transactional
-    public UserEntity syncUser(FirebaseUserInfo firebaseUser) {
-        Optional<UserEntity> existingUser = userPersistenceRepository.findByFirebaseUid(firebaseUser.uid());
+    public UserEntity syncUser(User firebaseUser) {
+        Optional<UserEntity> existingUser = userPersistenceRepository.findByFirebaseUid(firebaseUser.uid().value());
 
         if (existingUser.isPresent()) {
             UserEntity user = existingUser.get();
@@ -50,7 +50,7 @@ public class UserSyncService {
             return userPersistenceRepository.save(user);
         } else {
             UserEntity newUser = UserEntity.builder()
-                    .firebaseUid(firebaseUser.uid())
+                    .firebaseUid(firebaseUser.uid().value())
                     .email(firebaseUser.email())
                     .displayName(firebaseUser.name())
                     .role(Role.USER)  // Default role
@@ -72,7 +72,8 @@ public class UserSyncService {
      * @param firebaseUser the authenticated Firebase user
      * @return the user entity
      */
-    public UserEntity getOrCreateUser(FirebaseUserInfo firebaseUser) {
+    @Transactional
+    public UserEntity getOrCreateUser(User firebaseUser) {
         return syncUser(firebaseUser);
     }
 

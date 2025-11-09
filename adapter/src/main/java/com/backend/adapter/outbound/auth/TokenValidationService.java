@@ -1,6 +1,7 @@
 package com.backend.adapter.outbound.auth;
 
-import com.backend.domain.actor.FirebaseUserInfo;
+import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -18,12 +19,12 @@ final class TokenValidationService {
    * @param idToken the Firebase ID token from the Authorization header
    * @return Optional containing FirebaseUserInfo if token is valid, empty otherwise
    */
-  static Optional<FirebaseUserInfo> validateToken(String idToken) {
+  static Optional<User> validateToken(String idToken) {
     try {
       FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
 
-      FirebaseUserInfo userInfo = FirebaseUserInfo.builder()
-          .uid(decodedToken.getUid())
+      User userInfo = User.builder()
+          .uid(new ActorId(decodedToken.getUid()))
           .email(decodedToken.getEmail())
           .name(decodedToken.getName())
           .picture(decodedToken.getPicture())

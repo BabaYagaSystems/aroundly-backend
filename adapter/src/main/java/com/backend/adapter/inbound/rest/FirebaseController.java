@@ -3,7 +3,7 @@ package com.backend.adapter.inbound.rest;
 
 import com.backend.adapter.outbound.entity.UserEntity;
 import com.backend.adapter.outbound.repo.UserPersistenceRepository;
-import com.backend.domain.actor.FirebaseUserInfo;
+import com.backend.domain.actor.User;
 import com.backend.services.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,7 @@ public class FirebaseController {
      */
     @GetMapping("/test")
     public ResponseEntity<TestResponse> testAuth() {
-        Optional<FirebaseUserInfo> firebaseUser = authenticatedUserService.getCurrentUser();
+        Optional<User> firebaseUser = authenticatedUserService.getCurrentUser();
 
         if (firebaseUser.isEmpty()) {
             return ResponseEntity.ok(new TestResponse(
@@ -42,8 +42,8 @@ public class FirebaseController {
             ));
         }
 
-        FirebaseUserInfo user = firebaseUser.get();
-        Optional<UserEntity> dbUser = userPersistenceRepository.findByFirebaseUid(user.uid());
+        User user = firebaseUser.get();
+        Optional<UserEntity> dbUser = userPersistenceRepository.findByFirebaseUid(user.uid().value());
 
         return ResponseEntity.ok(new TestResponse(
                 true,
@@ -54,7 +54,7 @@ public class FirebaseController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<FirebaseUserInfo> getCurrentUser() {
+    public ResponseEntity<User> getCurrentUser() {
         return authenticatedUserService.getCurrentUser()
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(401).build());
@@ -63,7 +63,7 @@ public class FirebaseController {
     record TestResponse(
             boolean authenticated,
             String message,
-            FirebaseUserInfo firebaseUser,
+            User firebaseUser,
             UserEntity databaseUser
     ) {}
 }

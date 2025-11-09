@@ -24,7 +24,10 @@ public class CommentEntity {
     private IncidentEntity incident;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", foreignKey = @ForeignKey(name = "FK_COMMENT_USER"))
+    @JoinColumn(
+            name = "user_uid",
+            referencedColumnName = "firebase_uid",
+            foreignKey = @ForeignKey(name = "FK_COMMENT_USER"))
     private UserEntity user;
 
     @Column(columnDefinition = "TEXT")

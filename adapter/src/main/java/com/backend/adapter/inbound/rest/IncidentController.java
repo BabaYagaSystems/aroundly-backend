@@ -16,7 +16,7 @@ import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundExcep
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
 import com.backend.adapter.outbound.repo.persistence.UserSyncService;
 import com.backend.domain.actor.ActorId;
-import com.backend.domain.actor.FirebaseUserInfo;
+import com.backend.domain.actor.User;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
@@ -38,8 +38,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import javax.naming.AuthenticationException;
 
 /**
  * REST controller exposing CRUD and query endpoints for {@link Incident} resources.
@@ -99,10 +97,10 @@ public class IncidentController {
       @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
 
     try {
-      FirebaseUserInfo firebaseUserInfo = tokenValidationService.requireCurrentUser();
+      User user = tokenValidationService.requireCurrentUser();
       final CreateIncidentCommand createIncidentCommand = incidentMapper.toCreateIncidentCommand(incidentRequestDto);
 
-      ActorId actorId = new ActorId(userSyncService.getOrCreateUser(firebaseUserInfo).getFirebaseUid());
+      ActorId actorId = new ActorId(userSyncService.getOrCreateUser(user).getFirebaseUid());
       final CreateIncidentCommand createIncidentCommandWithActor = createIncidentCommand.toBuilder()
           .actorId(actorId)
           .build();
@@ -303,9 +301,9 @@ public class IncidentController {
   })
   public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(@PathVariable long id) {
     try {
-      FirebaseUserInfo firebaseUserInfo = getUserAuthentication().get();
+      User user = getUserAuthentication().get();
 
-      Incident incident = incidentUseCase.confirm(id, userSyncService.getOrCreateUser(firebaseUserInfo).getId());
+      Incident incident = incidentUseCase.confirm(id, userSyncService.getOrCreateUser(user).getId());
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
@@ -336,8 +334,8 @@ public class IncidentController {
   })
   public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(@PathVariable long id) {
     try {
-      FirebaseUserInfo firebaseUserInfo = getUserAuthentication().get();
-      Incident incident = incidentUseCase.deny(id, userSyncService.getOrCreateUser(firebaseUserInfo).getId());
+      User user = getUserAuthentication().get();
+      Incident incident = incidentUseCase.deny(id, userSyncService.getOrCreateUser(user).getId());
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
@@ -406,7 +404,7 @@ public class IncidentController {
     }
   }
 
-  private Optional<FirebaseUserInfo> getUserAuthentication() {
+  private Optional<User> getUserAuthentication() {
     try {
       if (tokenValidationService.isAuthenticated()) {
         return Optional.of(tokenValidationService.requireCurrentUser());

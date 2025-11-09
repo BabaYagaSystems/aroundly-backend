@@ -4,7 +4,7 @@ import static com.backend.adapter.outbound.auth.TokenValidationService.extractTo
 import static com.backend.adapter.outbound.auth.TokenValidationService.validateToken;
 
 import com.backend.adapter.outbound.repo.persistence.UserSyncService;
-import com.backend.domain.actor.FirebaseUserInfo;
+import com.backend.domain.actor.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,7 +47,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
         final Optional<String> token = extractToken(authHeader);
 
         if (token.isPresent()) {
-          final Optional<FirebaseUserInfo> userInfo = validateToken(token.get());
+          final Optional<User> userInfo = validateToken(token.get());
 
           if (userInfo.isPresent()) {
             try {
@@ -72,7 +72,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
   /**
    * Sets the authentication in Spring Security context.
    */
-  private void setAuthentication(final HttpServletRequest request, final FirebaseUserInfo userInfo) {
+  private void setAuthentication(final HttpServletRequest request, final User userInfo) {
     final UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
         userInfo,  // Principal (the authenticated user)
         null,      // Credentials (not needed after authentication)
