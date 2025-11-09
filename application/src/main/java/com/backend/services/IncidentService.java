@@ -1,5 +1,6 @@
 package com.backend.services;
 
+import com.backend.domain.actor.ActorId;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
@@ -117,7 +118,7 @@ public class IncidentService implements IncidentUseCase {
         validateCreateIncidentCommand(createIncidentCommand);
 
         try {
-          final long actorId = createIncidentCommand.actorId();
+          final ActorId actorId = createIncidentCommand.actorId();
           final String title = createIncidentCommand.title();
           final String description = createIncidentCommand.description();
           final Set<UploadMediaCommand> media = createIncidentCommand.media();
@@ -215,8 +216,8 @@ public class IncidentService implements IncidentUseCase {
                     "User has already denied incident " + incidentId);
               });
 
-            incident.confirmIncident();
-            incidentEngagementRepository.saveEngagement(incidentId, userId, IncidentEngagementType.CONFIRM);
+          incident.confirmIncident();
+          incidentEngagementRepository.saveEngagement(incidentId, userId, IncidentEngagementType.CONFIRM);
 
           return incidentRepository.save(incident);
 
@@ -246,18 +247,18 @@ public class IncidentService implements IncidentUseCase {
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
 
         try {
-            final Incident incident = findById(incidentId);
-            incidentEngagementRepository.findUserEngagement(incidentId, userId)
-                .ifPresent(existing -> {
-                  if (existing == IncidentEngagementType.DENY) {
-                    throw new IncidentAlreadyDeniedException(
-                        "User has already denied incident " + incidentId);
-                  }
-                  throw new IncidentAlreadyConfirmedException(
-                      "User has already confirmed incident " + incidentId);
-                });
-            incident.denyIncident();
-            incidentEngagementRepository.saveEngagement(incidentId, userId, IncidentEngagementType.DENY);
+          final Incident incident = findById(incidentId);
+          incidentEngagementRepository.findUserEngagement(incidentId, userId)
+              .ifPresent(existing -> {
+                if (existing == IncidentEngagementType.DENY) {
+                  throw new IncidentAlreadyDeniedException(
+                      "User has already denied incident " + incidentId);
+                }
+                throw new IncidentAlreadyConfirmedException(
+                    "User has already confirmed incident " + incidentId);
+              });
+          incident.denyIncident();
+          incidentEngagementRepository.saveEngagement(incidentId, userId, IncidentEngagementType.DENY);
 
           return incidentRepository.save(incident);
 

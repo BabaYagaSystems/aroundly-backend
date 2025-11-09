@@ -38,7 +38,7 @@ class IncidentPreviewDtoAssemblerTest {
   void setUp() {
     media = Set.of(new Media(1L, "file", "image/png"));
     incident = Incident.builder()
-        .actorId(1L)
+        .actorId(new ActorId("abc"))
         .locationId(new LocationId(42L))
         .title("title")
         .description("desc")

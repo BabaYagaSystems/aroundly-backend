@@ -20,6 +20,7 @@ import com.backend.adapter.inbound.mapper.assembler.IncidentDetailedDtoAssembler
 import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
+import com.backend.domain.actor.ActorId;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
@@ -71,7 +72,7 @@ class IncidentControllerTest {
             "name",
             2L, "type"));
     final CreateIncidentCommand command = new CreateIncidentCommand(
-        1L, "title", "description", mediaCommands, 31.31, 41.23);
+        new ActorId("abc"), "title", "description", mediaCommands, 31.31, 41.23);
     final Incident incident = createIncident();
     final IncidentRequestDto incidentRequestDto = createIncidentRequestDto();
     final IncidentDetailedResponseDto incidentDetailedResponseDto = createIncidentDetailedResponseDto();
@@ -80,8 +81,7 @@ class IncidentControllerTest {
     when(incidentUseCase.create(command)).thenReturn(incident);
     when(incidentDetailedDtoAssembler.toDetailedDto(incident)).thenReturn(incidentDetailedResponseDto);
 
-    // TODO: fix the test
-    final ResponseEntity<IncidentDetailedResponseDto> response = controller.create("da", incidentRequestDto);
+    final ResponseEntity<IncidentDetailedResponseDto> response = controller.create(incidentRequestDto);
 
     final IncidentDetailedResponseDto body = response.getBody();
 
@@ -98,7 +98,7 @@ class IncidentControllerTest {
             "name",
             2L, "type"));
     final CreateIncidentCommand command = new CreateIncidentCommand(
-        1L, "new title", "new description", mediaCommands, 31.31, 41.23);
+        new ActorId("abc"), "new title", "new description", mediaCommands, 31.31, 41.23);
 
     final IncidentRequestDto updatedIncidentRequestDto = updateIncidentRequestDto();
     final IncidentDetailedResponseDto updatedIncidentDetailedResponseDto = updateIncidentDetailedResponseDto();
@@ -199,7 +199,7 @@ class IncidentControllerTest {
         .thenReturn(confirmedIncidentDetailedResponseDto);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
-        controller.confirmIncidentPresence(INCIDENT_ID, "");
+        controller.confirmIncidentPresence(INCIDENT_ID);
 
     IncidentDetailedResponseDto body = response.getBody();
 
@@ -217,7 +217,7 @@ class IncidentControllerTest {
         .thenReturn(deniedIncidentDetailedResponseDto);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
-        controller.denyIncidentPresence(INCIDENT_ID, "");
+        controller.denyIncidentPresence(INCIDENT_ID);
 
     IncidentDetailedResponseDto body = response.getBody();
 
@@ -377,7 +377,7 @@ class IncidentControllerTest {
 
   private Incident createIncident() {
     return Incident.builder()
-      .actorId(1L)
+      .actorId(new ActorId("abc"))
       .locationId(new LocationId(1L))
       .title("title")
       .description("description")
@@ -411,7 +411,7 @@ class IncidentControllerTest {
 
   private Incident updateIncident() {
     return Incident.builder()
-      .actorId(1L)
+      .actorId(new ActorId("abc"))
       .locationId(new LocationId(1L))
       .title("updated title")
       .description("description")

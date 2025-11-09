@@ -54,7 +54,7 @@ class IncidentMapperTest {
 
   private Incident createIncident() {
     return Incident.builder()
-        .actorId(1L)
+        .actorId(new ActorId("abc"))
         .locationId(new LocationId(1L))
         .title("title")
         .description("description")

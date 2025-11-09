@@ -15,12 +15,13 @@ import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredExc
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
 import com.backend.adapter.outbound.repo.persistence.UserSyncService;
+import com.backend.domain.actor.ActorId;
 import com.backend.domain.actor.FirebaseUserInfo;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
-import com.backend.services.FirebaseTokenValidator;
+import com.backend.services.AuthenticatedUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -58,7 +59,7 @@ public class IncidentController {
   private final LocationMapper locationMapper;
   private final IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
   private final UserSyncService userSyncService;
-  private final FirebaseTokenValidator firebaseTokenValidator;
+  private final AuthenticatedUserService tokenValidationService;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
@@ -66,7 +67,7 @@ public class IncidentController {
       IncidentMapper incidentMapper,
       LocationMapper locationMapper,
       IncidentPreviewDtoAssembler incidentPreviewDtoAssembler, UserSyncService userSyncService,
-      FirebaseTokenValidator firebaseTokenValidator) {
+      AuthenticatedUserService tokenValidationService) {
 
     this.incidentUseCase = incidentUseCase;
     this.incidentMapper = incidentMapper;
@@ -74,7 +75,7 @@ public class IncidentController {
     this.locationMapper = locationMapper;
     this.incidentPreviewDtoAssembler = incidentPreviewDtoAssembler;
     this.userSyncService = userSyncService;
-    this.firebaseTokenValidator = firebaseTokenValidator;
+    this.tokenValidationService = tokenValidationService;
   }
 
   /**
@@ -95,22 +96,18 @@ public class IncidentController {
   })
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<IncidentDetailedResponseDto> create(
-      @RequestHeader("Authorization") String authHeader,
       @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
 
     try {
+      FirebaseUserInfo firebaseUserInfo = tokenValidationService.requireCurrentUser();
+      final CreateIncidentCommand createIncidentCommand = incidentMapper.toCreateIncidentCommand(incidentRequestDto);
 
-      Optional<String> token = firebaseTokenValidator.extractToken(authHeader);
-      FirebaseUserInfo firebaseUserInfo = firebaseTokenValidator.validateToken(token.get()).orElseThrow();
-
-      CreateIncidentCommand createIncidentCommand = incidentMapper
-          .toCreateIncidentCommand(incidentRequestDto);
-
-      createIncidentCommand.toBuilder()
-          .actorId(userSyncService.getOrCreateUser(firebaseUserInfo).getId())
+      ActorId actorId = new ActorId(userSyncService.getOrCreateUser(firebaseUserInfo).getFirebaseUid());
+      final CreateIncidentCommand createIncidentCommandWithActor = createIncidentCommand.toBuilder()
+          .actorId(actorId)
           .build();
 
-      Incident incident = incidentUseCase.create(createIncidentCommand);
+      Incident incident = incidentUseCase.create(createIncidentCommandWithActor);
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
       return new ResponseEntity<>(incidentDetailedResponseDto, HttpStatus.CREATED);
@@ -304,12 +301,9 @@ public class IncidentController {
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already confirmed")
   })
-  public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(
-      @PathVariable long id,
-      @RequestHeader("Authorization") String authHeader) {
-
+  public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(@PathVariable long id) {
     try {
-      FirebaseUserInfo firebaseUserInfo = authenticate(authHeader);
+      FirebaseUserInfo firebaseUserInfo = getUserAuthentication().get();
 
       Incident incident = incidentUseCase.confirm(id, userSyncService.getOrCreateUser(firebaseUserInfo).getId());
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
@@ -321,9 +315,6 @@ public class IncidentController {
     } catch (IncidentAlreadyConfirmedException e) {
       log.warn("IncidentEntity already confirmed: {}", id);
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
-    } catch (AuthenticationException e) {
-      log.warn("Authentication failed while confirming incident {}: {}", id, e.getMessage());
-      return ResponseEntity.notFound().build();
     }
   }
 
@@ -343,11 +334,9 @@ public class IncidentController {
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already denied")
   })
-  public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(
-      @PathVariable long id,
-      @RequestHeader("Authorization") String authHeader) {
+  public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(@PathVariable long id) {
     try {
-      FirebaseUserInfo firebaseUserInfo = authenticate(authHeader);
+      FirebaseUserInfo firebaseUserInfo = getUserAuthentication().get();
       Incident incident = incidentUseCase.deny(id, userSyncService.getOrCreateUser(firebaseUserInfo).getId());
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
@@ -358,9 +347,6 @@ public class IncidentController {
     } catch (IncidentAlreadyConfirmedException e) {
       log.warn("IncidentEntity already denied: {}", id);
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
-    } catch (AuthenticationException e) {
-      log.warn("Authentication failed while confirming incident {}: {}", id, e.getMessage());
-      return ResponseEntity.notFound().build();
     }
   }
 
@@ -420,11 +406,15 @@ public class IncidentController {
     }
   }
 
-  private FirebaseUserInfo authenticate(String authHeader) throws AuthenticationException {
-    String token = firebaseTokenValidator.extractToken(authHeader)
-        .orElseThrow(() -> new AuthenticationException("Missing or malformed Authorization header"));
+  private Optional<FirebaseUserInfo> getUserAuthentication() {
+    try {
+      if (tokenValidationService.isAuthenticated()) {
+        return Optional.of(tokenValidationService.requireCurrentUser());
+      }
+    } catch (IllegalArgumentException e) {
+      log.error("Missing or malformed Authorization header");
+    }
 
-    return firebaseTokenValidator.validateToken(token)
-        .orElseThrow(() -> new AuthenticationException("Invalid Firebase token"));
+    return Optional.empty();
   }
 }

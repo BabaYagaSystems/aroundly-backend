@@ -3,12 +3,14 @@ package com.backend.adapter.inbound.mapper.assembler;
 import com.backend.adapter.inbound.dto.media.MediaDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.mapper.IncidentMapper;
+import com.backend.adapter.outbound.entity.UserEntity;
 import com.backend.adapter.outbound.factory.MediaPreviewFactory;
+import com.backend.adapter.outbound.repo.UserRepository;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.port.inbound.ReactionUseCase;
-import com.backend.port.inbound.commands.ReactToIncidentCommand;
 import com.backend.port.outbound.repo.LocationRepository;
+import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,7 @@ public class IncidentDetailedDtoAssembler {
 
   private final IncidentMapper mapper;
   private final LocationRepository locationRepository;
+  private final UserRepository userRepository;
   private final MediaPreviewFactory mediaPreviewFactory;
   private final ReactionUseCase reactionUseCase;
 
@@ -41,16 +44,13 @@ public class IncidentDetailedDtoAssembler {
         dto.toBuilder().media(mediaDtos);
 
     Location location = locationRepository.findById(incident.getLocationId().value());
+    Optional<UserEntity> user = userRepository.findByFirebaseUid(incident.getActorId().value());
 
     if (location != null) {
       builder.lat(location.latitude()).lon(location.longitude()).address(location.address());
     }
 
-//    var summary = reactionUseCase.getSummary(new ReactToIncidentCommand(incident.getId(), null));
-//    builder
-//        .like(summary.likes())
-//        .dislike(summary.dislikes());
-
+    user.ifPresent(userEntity -> builder.actorUsername(userEntity.getFirebaseUid()));
     return builder.build();
   }
 }
