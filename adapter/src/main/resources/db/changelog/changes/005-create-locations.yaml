@@ -12,7 +12,7 @@ databaseChangeLog:
         - createSequence:
             sequenceName: location_id_seq
         - sqlFile:
-            path: ../sql/002-create-locations-table.sql
+            path: ../sql/005-create-locations-table.sql
             relativeToChangelogFile: true
 
         - sql:

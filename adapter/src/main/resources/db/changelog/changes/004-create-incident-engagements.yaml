@@ -12,7 +12,7 @@ databaseChangeLog:
         - createSequence:
             sequenceName: incident_engagement_id_seq
         - sqlFile:
-            path: ../sql/008-create-incident-engagements-table.sql
+            path: ../sql/004-create-incident-engagements-table.sql
             relativeToChangelogFile: true
         - sql:
             sql: ALTER TABLE incident_engagements OWNER TO ${schema.owner}

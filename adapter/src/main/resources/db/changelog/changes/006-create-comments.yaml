@@ -1,19 +1,19 @@
 databaseChangeLog:
   - changeSet:
-      id: create-incidents
+      id: create-comments
       author: babayaga
       preConditions:
         - onFail: WARN
         - onError: WARN
         - not:
             sequenceExists:
-              sequenceName: incident_id_seq
+              sequenceName: comment_id_seq
       changes:
         - createSequence:
-            sequenceName: incident_id_seq
+            sequenceName: comment_id_seq
         - sqlFile:
-            path: ../sql/003-create-incidents-table.sql
+            path: ../sql/006-create-comments-table.sql
             relativeToChangelogFile: true
 
         - sql:
-            sql: ALTER TABLE incidents OWNER TO ${schema.owner}
+            sql: ALTER TABLE comments OWNER TO ${schema.owner}

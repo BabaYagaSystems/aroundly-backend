@@ -12,7 +12,7 @@ databaseChangeLog:
         - createSequence:
             sequenceName: media_id_seq
         - sqlFile:
-            path: ../sql/006-create-medias-table.sql
+            path: ../sql/003-create-medias-table.sql
             relativeToChangelogFile: true
 
         - sql:
