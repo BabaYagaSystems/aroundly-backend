@@ -1,10 +1,22 @@
 databaseChangeLog:
-  - includeAll:
-        path: classpath:/db/changelog/changes/
-
   - changeSet:
       id: enable-postgis
       author: babayaga
       changes:
         - sql:
             sql: CREATE EXTENSION IF NOT EXISTS postgis;
+
+  - include:
+      file: classpath:/db/changelog/changes/001-create-users.yaml
+  - include:
+      file: classpath:/db/changelog/changes/005-create-locations.yaml
+  - include:
+      file: classpath:/db/changelog/changes/002-create-incidents.yaml
+  - include:
+      file: classpath:/db/changelog/changes/003-create-medias.yaml
+  - include:
+      file: classpath:/db/changelog/changes/004-create-incident-engagements.yaml
+  - include:
+      file: classpath:/db/changelog/changes/006-create-comments.yaml
+  - include:
+      file: classpath:/db/changelog/changes/007-create-reations.yaml
