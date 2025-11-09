@@ -12,7 +12,7 @@ public record ReactToIncidentCommand(long incidentId, String userId) {
 
   public ReactToIncidentCommand {
     if (incidentId <= 0) {
-      throw new IllegalArgumentException("Incident id must be positive");
+      throw new IllegalArgumentException("Incident value must be positive");
     }
   }
 
