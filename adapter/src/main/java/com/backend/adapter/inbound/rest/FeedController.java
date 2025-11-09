@@ -2,7 +2,7 @@ package com.backend.adapter.inbound.rest;
 
 import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
-import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
+import com.backend.adapter.inbound.mapper.IncidentResponseMapper;
 import com.backend.adapter.inbound.mapper.LocationMapper;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
 import com.backend.domain.happening.Incident;
@@ -32,16 +32,16 @@ public class FeedController {
 
   private final LocationMapper locationMapper;
   private final IncidentUseCase incidentUseCase;
-  private final IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
+  private final IncidentResponseMapper incidentResponseMapper;
 
   public FeedController(
       LocationMapper locationMapper,
       IncidentUseCase incidentUseCase,
-      IncidentPreviewDtoAssembler incidentPreviewDtoAssembler) {
+      IncidentResponseMapper incidentResponseMapper) {
 
     this.locationMapper = locationMapper;
     this.incidentUseCase = incidentUseCase;
-    this.incidentPreviewDtoAssembler = incidentPreviewDtoAssembler;
+    this.incidentResponseMapper = incidentResponseMapper;
   }
 
   @GetMapping
@@ -60,7 +60,7 @@ public class FeedController {
         RadiusCommand radiusCommand = locationMapper.toRadiusCommand(radiusRequestDto);
         List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
         List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
-            .map(incidentPreviewDtoAssembler::toPreviewDto)
+            .map(incidentResponseMapper::toIncidentPreviewResponseDto)
             .toList();
 
         return ResponseEntity.ok(responseDtos);

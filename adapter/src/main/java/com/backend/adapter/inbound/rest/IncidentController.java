@@ -4,10 +4,8 @@ import com.backend.adapter.inbound.dto.request.IncidentRequestDto;
 import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
-import com.backend.adapter.inbound.mapper.IncidentMapper;
+import com.backend.adapter.inbound.mapper.IncidentResponseMapper;
 import com.backend.adapter.inbound.mapper.LocationMapper;
-import com.backend.adapter.inbound.mapper.assembler.IncidentDetailedDtoAssembler;
-import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
 import com.backend.adapter.inbound.rest.exception.incident.ActorNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.DuplicateIncidentException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfirmedException;
@@ -15,7 +13,6 @@ import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredExc
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
 import com.backend.adapter.outbound.repo.persistence.UserSyncService;
-import com.backend.domain.actor.ActorId;
 import com.backend.domain.actor.User;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
@@ -52,26 +49,21 @@ import org.springframework.web.bind.annotation.*;
 public class IncidentController {
 
   private final IncidentUseCase incidentUseCase;
-  private final IncidentDetailedDtoAssembler incidentDetailedResponseAssembler;
-  private final IncidentMapper incidentMapper;
+  private final IncidentResponseMapper incidentResponseMapper;
   private final LocationMapper locationMapper;
-  private final IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
   private final UserSyncService userSyncService;
   private final AuthenticatedUserService tokenValidationService;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
-      IncidentDetailedDtoAssembler incidentDetailedResponseAssembler,
-      IncidentMapper incidentMapper,
+      IncidentResponseMapper incidentResponseMapper,
       LocationMapper locationMapper,
-      IncidentPreviewDtoAssembler incidentPreviewDtoAssembler, UserSyncService userSyncService,
+      UserSyncService userSyncService,
       AuthenticatedUserService tokenValidationService) {
 
     this.incidentUseCase = incidentUseCase;
-    this.incidentMapper = incidentMapper;
-    this.incidentDetailedResponseAssembler = incidentDetailedResponseAssembler;
+    this.incidentResponseMapper = incidentResponseMapper;
     this.locationMapper = locationMapper;
-    this.incidentPreviewDtoAssembler = incidentPreviewDtoAssembler;
     this.userSyncService = userSyncService;
     this.tokenValidationService = tokenValidationService;
   }
@@ -97,16 +89,10 @@ public class IncidentController {
       @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
 
     try {
-      User user = tokenValidationService.requireCurrentUser();
-      final CreateIncidentCommand createIncidentCommand = incidentMapper.toCreateIncidentCommand(incidentRequestDto);
+      final CreateIncidentCommand createIncidentCommand = incidentResponseMapper.toCreateIncidentCommand(incidentRequestDto);
 
-      ActorId actorId = new ActorId(userSyncService.getOrCreateUser(user).getFirebaseUid());
-      final CreateIncidentCommand createIncidentCommandWithActor = createIncidentCommand.toBuilder()
-          .actorId(actorId)
-          .build();
-
-      Incident incident = incidentUseCase.create(createIncidentCommandWithActor);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
+      Incident incident = incidentUseCase.create(createIncidentCommand);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
       return new ResponseEntity<>(incidentDetailedResponseDto, HttpStatus.CREATED);
 
@@ -141,11 +127,11 @@ public class IncidentController {
       @RequestBody @Valid IncidentRequestDto newIncidentRequestDto) {
 
     try {
-      CreateIncidentCommand newCreateIncidentCommand = incidentMapper
+      CreateIncidentCommand newCreateIncidentCommand = incidentResponseMapper
           .toCreateIncidentCommand(newIncidentRequestDto);
 
       Incident updatedIncident = incidentUseCase.update(id, newCreateIncidentCommand);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(updatedIncident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(updatedIncident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -177,7 +163,7 @@ public class IncidentController {
     try {
       Incident incident = incidentUseCase.findById(id);
       IncidentPreviewResponseDto incidentPreviewResponseDto =
-          incidentPreviewDtoAssembler.toPreviewDto(incident);
+          incidentResponseMapper.toIncidentPreviewResponseDto(incident);
 
       return ResponseEntity.ok(incidentPreviewResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -207,7 +193,7 @@ public class IncidentController {
   public ResponseEntity<IncidentDetailedResponseDto> getIncidentInDetails(@PathVariable long id) {
     try {
       Incident incident = incidentUseCase.findById(id);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -240,7 +226,7 @@ public class IncidentController {
     try {
       List<Incident> incidents = incidentUseCase.findByUserId(id);
       List<IncidentPreviewResponseDto> incidentPreviewResponseDtos = incidents.stream()
-          .map(incidentPreviewDtoAssembler::toPreviewDto)
+          .map(incidentResponseMapper::toIncidentPreviewResponseDto)
           .toList();
 
       return ResponseEntity.ok(incidentPreviewResponseDtos);
@@ -272,7 +258,7 @@ public class IncidentController {
       RadiusCommand radiusCommand = locationMapper.toRadiusCommand(radiusRequestDto);
       List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
       List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
-          .map(incidentPreviewDtoAssembler::toPreviewDto)
+          .map(incidentResponseMapper::toIncidentPreviewResponseDto)
           .toList();
 
 
@@ -304,7 +290,7 @@ public class IncidentController {
       User user = getUserAuthentication().get();
 
       Incident incident = incidentUseCase.confirm(id, userSyncService.getOrCreateUser(user).getId());
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -336,7 +322,7 @@ public class IncidentController {
     try {
       User user = getUserAuthentication().get();
       Incident incident = incidentUseCase.deny(id, userSyncService.getOrCreateUser(user).getId());
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
