@@ -44,7 +44,7 @@ public final class IncidentMapper {
     IncidentEntity incidentEntity = incidentEntityBuilder.build();
 
     domain.getMedia().stream()
-      .map(MediaEntityMappers::toEntity)
+      .map(MediaEntityMapper::toEntity)
       .forEach(incidentEntity::addMedia);
 
     return incidentEntity;
@@ -56,7 +56,7 @@ public final class IncidentMapper {
       .userId(new UserId(entity.getUser().getFirebaseUid()))
       .locationId(new LocationId(entity.getLocation().getId()))
       .media(entity.getMedia().stream()
-          .map(MediaEntityMappers::toDomain)
+          .map(MediaEntityMapper::toDomain)
           .collect(Collectors.toSet()))
       .title(entity.getTitle())
       .description(entity.getDescription())

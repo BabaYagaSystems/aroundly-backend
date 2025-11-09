@@ -1,7 +1,7 @@
 package com.backend.adapter.outbound.repo.persistence;
 
 import com.backend.adapter.outbound.entity.MediaEntity;
-import com.backend.adapter.outbound.mapper.MediaEntityMappers;
+import com.backend.adapter.outbound.mapper.MediaEntityMapper;
 import com.backend.adapter.outbound.repo.MediaPersistenceRepository;
 import com.backend.domain.media.Media;
 import com.backend.port.outbound.repo.MediaRepository;
@@ -35,13 +35,13 @@ public class MediaPersistence implements MediaRepository {
     if (media == null || media.isEmpty()) return Set.of();
 
     List<MediaEntity> entities = media.stream()
-      .map(MediaEntityMappers::toEntity)
+      .map(MediaEntityMapper::toEntity)
       .collect(Collectors.toList());
 
     List<MediaEntity> saved = repository.saveAll(entities);
 
     return saved.stream()
-      .map(MediaEntityMappers::toDomain)
+      .map(MediaEntityMapper::toDomain)
       .collect(Collectors.toSet());
   }
 
@@ -70,6 +70,6 @@ public class MediaPersistence implements MediaRepository {
   public Optional<Media> findByKey(String key) throws Exception {
     if (key == null || key.isEmpty()) return Optional.empty();
 
-    return repository.findByKey(key).map(MediaEntityMappers::toDomain);
+    return repository.findByKey(key).map(MediaEntityMapper::toDomain);
   }
 }
