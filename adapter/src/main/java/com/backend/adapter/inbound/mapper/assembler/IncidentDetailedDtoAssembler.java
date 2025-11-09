@@ -5,7 +5,7 @@ import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedRespons
 import com.backend.adapter.inbound.mapper.IncidentMapper;
 import com.backend.adapter.outbound.entity.UserEntity;
 import com.backend.adapter.outbound.factory.MediaPreviewFactory;
-import com.backend.adapter.outbound.repo.UserRepository;
+import com.backend.adapter.outbound.repo.UserPersistenceRepository;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.port.inbound.ReactionUseCase;
@@ -25,7 +25,7 @@ public class IncidentDetailedDtoAssembler {
 
   private final IncidentMapper mapper;
   private final LocationRepository locationRepository;
-  private final UserRepository userRepository;
+  private final UserPersistenceRepository userPersistenceRepository;
   private final MediaPreviewFactory mediaPreviewFactory;
   private final ReactionUseCase reactionUseCase;
 
@@ -44,7 +44,7 @@ public class IncidentDetailedDtoAssembler {
         dto.toBuilder().media(mediaDtos);
 
     Location location = locationRepository.findById(incident.getLocationId().value());
-    Optional<UserEntity> user = userRepository.findByFirebaseUid(incident.getActorId().value());
+    Optional<UserEntity> user = userPersistenceRepository.findByFirebaseUid(incident.getActorId().value());
 
     if (location != null) {
       builder.lat(location.latitude()).lon(location.longitude()).address(location.address());

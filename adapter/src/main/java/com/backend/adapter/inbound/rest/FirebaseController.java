@@ -2,7 +2,7 @@ package com.backend.adapter.inbound.rest;
 
 
 import com.backend.adapter.outbound.entity.UserEntity;
-import com.backend.adapter.outbound.repo.UserRepository;
+import com.backend.adapter.outbound.repo.UserPersistenceRepository;
 import com.backend.domain.actor.FirebaseUserInfo;
 import com.backend.services.AuthenticatedUserService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.util.Optional;
 public class FirebaseController {
 
     private final AuthenticatedUserService authenticatedUserService;
-    private final UserRepository userRepository;
+    private final UserPersistenceRepository userPersistenceRepository;
 
     /**
      * Test endpoint - checks if user is authenticated and in database
@@ -43,7 +43,7 @@ public class FirebaseController {
         }
 
         FirebaseUserInfo user = firebaseUser.get();
-        Optional<UserEntity> dbUser = userRepository.findByFirebaseUid(user.uid());
+        Optional<UserEntity> dbUser = userPersistenceRepository.findByFirebaseUid(user.uid());
 
         return ResponseEntity.ok(new TestResponse(
                 true,

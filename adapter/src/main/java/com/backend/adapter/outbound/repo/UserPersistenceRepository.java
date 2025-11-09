@@ -10,7 +10,7 @@ import java.util.Optional;
  * Repository for accessing user data.
  */
 @Repository
-public interface UserRepository extends JpaRepository<UserEntity, Long> {
+public interface UserPersistenceRepository extends JpaRepository<UserEntity, Long> {
 
     /**
      * Finds a user by their Firebase UID.

@@ -1,7 +1,7 @@
 package com.backend.adapter.outbound.repo.persistence;
 
 import com.backend.adapter.outbound.entity.UserEntity;
-import com.backend.adapter.outbound.repo.UserRepository;
+import com.backend.adapter.outbound.repo.UserPersistenceRepository;
 import com.backend.domain.actor.Role;
 import com.backend.domain.actor.FirebaseUserInfo;
 import jakarta.transaction.Transactional;
@@ -21,7 +21,7 @@ import java.util.Optional;
 @Slf4j
 public class UserSyncService {
 
-    private final UserRepository userRepository;
+    private final UserPersistenceRepository userPersistenceRepository;
 
     /**
      * Ensures a user exists in the database for the given Firebase user.
@@ -32,7 +32,7 @@ public class UserSyncService {
      */
     @Transactional
     public UserEntity syncUser(FirebaseUserInfo firebaseUser) {
-        Optional<UserEntity> existingUser = userRepository.findByFirebaseUid(firebaseUser.uid());
+        Optional<UserEntity> existingUser = userPersistenceRepository.findByFirebaseUid(firebaseUser.uid());
 
         if (existingUser.isPresent()) {
             UserEntity user = existingUser.get();
@@ -47,7 +47,7 @@ public class UserSyncService {
                 log.info("Updated display name for user {}", firebaseUser.uid());
             }
 
-            return userRepository.save(user);
+            return userPersistenceRepository.save(user);
         } else {
             UserEntity newUser = UserEntity.builder()
                     .firebaseUid(firebaseUser.uid())
@@ -60,7 +60,7 @@ public class UserSyncService {
                     .lastLogin(Instant.now())
                     .build();
 
-            UserEntity saved = userRepository.save(newUser);
+            UserEntity saved = userPersistenceRepository.save(newUser);
             log.info("Created new user in database: {} ({})", saved.getFirebaseUid(), saved.getEmail());
             return saved;
         }
@@ -84,9 +84,9 @@ public class UserSyncService {
      */
     @Transactional
     public void updateFcmToken(String firebaseUid, String fcmToken) {
-        userRepository.findByFirebaseUid(firebaseUid).ifPresent(user -> {
+        userPersistenceRepository.findByFirebaseUid(firebaseUid).ifPresent(user -> {
             user.setFcmToken(fcmToken);
-            userRepository.save(user);
+            userPersistenceRepository.save(user);
             log.info("Updated FCM token for user {}", firebaseUid);
         });
     }
@@ -99,9 +99,9 @@ public class UserSyncService {
      */
     @Transactional
     public void updateRange(String firebaseUid, Integer rangeKm) {
-        userRepository.findByFirebaseUid(firebaseUid).ifPresent(user -> {
+        userPersistenceRepository.findByFirebaseUid(firebaseUid).ifPresent(user -> {
             user.setRangeKm(rangeKm);
-            userRepository.save(user);
+            userPersistenceRepository.save(user);
             log.info("Updated range to {}km for user {}", rangeKm, firebaseUid);
         });
     }
