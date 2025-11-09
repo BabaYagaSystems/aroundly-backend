@@ -39,7 +39,7 @@ public class LocationService implements LocationUseCase {
     /**
      * Finds a location by its unique identifier.
      *
-     * @param locationId id of the location
+     * @param locationId value of the location
      * @return the matching location, or null if not found
      */
     @Override
