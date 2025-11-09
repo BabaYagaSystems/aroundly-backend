@@ -1,9 +1,10 @@
 package com.backend.adapter.inbound.rest;
 
+import static com.backend.adapter.inbound.mapper.LocationMapper.toRadiusCommand;
+
 import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
 import com.backend.adapter.inbound.mapper.IncidentResponseMapper;
-import com.backend.adapter.inbound.mapper.LocationMapper;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
@@ -30,16 +31,13 @@ import java.util.List;
 @SecurityRequirement(name = "bearerAuth")
 public class FeedController {
 
-  private final LocationMapper locationMapper;
   private final IncidentUseCase incidentUseCase;
   private final IncidentResponseMapper incidentResponseMapper;
 
   public FeedController(
-      LocationMapper locationMapper,
       IncidentUseCase incidentUseCase,
       IncidentResponseMapper incidentResponseMapper) {
 
-    this.locationMapper = locationMapper;
     this.incidentUseCase = incidentUseCase;
     this.incidentResponseMapper = incidentResponseMapper;
   }
@@ -57,7 +55,7 @@ public class FeedController {
     public ResponseEntity<List<IncidentPreviewResponseDto>> findAllInGivenRange(
       @ModelAttribute @Valid RadiusRequestDto radiusRequestDto) {
       try {
-        RadiusCommand radiusCommand = locationMapper.toRadiusCommand(radiusRequestDto);
+        RadiusCommand radiusCommand = toRadiusCommand(radiusRequestDto);
         List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
         List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
             .map(incidentResponseMapper::toIncidentPreviewResponseDto)

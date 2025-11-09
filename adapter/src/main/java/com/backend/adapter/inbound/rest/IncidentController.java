@@ -1,11 +1,12 @@
 package com.backend.adapter.inbound.rest;
 
+import static com.backend.adapter.inbound.mapper.LocationMapper.toRadiusCommand;
+
 import com.backend.adapter.inbound.dto.request.IncidentRequestDto;
 import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
 import com.backend.adapter.inbound.mapper.IncidentResponseMapper;
-import com.backend.adapter.inbound.mapper.LocationMapper;
 import com.backend.adapter.inbound.rest.exception.incident.ActorNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.DuplicateIncidentException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfirmedException;
@@ -50,20 +51,17 @@ public class IncidentController {
 
   private final IncidentUseCase incidentUseCase;
   private final IncidentResponseMapper incidentResponseMapper;
-  private final LocationMapper locationMapper;
   private final UserSyncService userSyncService;
   private final AuthenticatedUserService tokenValidationService;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
       IncidentResponseMapper incidentResponseMapper,
-      LocationMapper locationMapper,
       UserSyncService userSyncService,
       AuthenticatedUserService tokenValidationService) {
 
     this.incidentUseCase = incidentUseCase;
     this.incidentResponseMapper = incidentResponseMapper;
-    this.locationMapper = locationMapper;
     this.userSyncService = userSyncService;
     this.tokenValidationService = tokenValidationService;
   }
@@ -255,7 +253,7 @@ public class IncidentController {
       @ModelAttribute @Valid RadiusRequestDto radiusRequestDto) {
 
     try {
-      RadiusCommand radiusCommand = locationMapper.toRadiusCommand(radiusRequestDto);
+      RadiusCommand radiusCommand = toRadiusCommand(radiusRequestDto);
       List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
       List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
           .map(incidentResponseMapper::toIncidentPreviewResponseDto)

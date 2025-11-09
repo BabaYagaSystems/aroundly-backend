@@ -13,7 +13,6 @@ import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
 import com.backend.adapter.inbound.dto.media.MediaDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
-import com.backend.adapter.inbound.mapper.LocationMapper;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.domain.actor.UserId;
@@ -27,7 +26,6 @@ import com.backend.port.inbound.commands.RadiusCommand;
 import com.backend.port.inbound.commands.UploadMediaCommand;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
@@ -53,7 +51,6 @@ class IncidentControllerTest {
   private static final String ACTOR_ID = "abc-123";
 
   @Mock private IncidentUseCase incidentUseCase;
-  @Mock private LocationMapper locationMapper;
   @InjectMocks private IncidentController controller;
 
   @Test
@@ -153,7 +150,6 @@ class IncidentControllerTest {
 
   @Test
   void testFindNearbyIncidents() throws IOException {
-    when(locationMapper.toRadiusCommand(createRadiusRequestDto())).thenReturn(createRadiusCommand());
     when(incidentUseCase.findAllInGivenRange(createRadiusCommand()))
         .thenReturn(List.of(createIncident()));
 
