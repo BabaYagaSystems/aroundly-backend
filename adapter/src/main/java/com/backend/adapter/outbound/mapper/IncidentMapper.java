@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public final class IncidentMapper {
 
-  private final MediaEntityMapper mediaEntityMapper;
   private final LocationPersistenceRepository locationPersistenceRepository;
   private final UserPersistenceRepository userPersistenceRepository;
 
@@ -45,7 +44,7 @@ public final class IncidentMapper {
     IncidentEntity incidentEntity = incidentEntityBuilder.build();
 
     domain.getMedia().stream()
-      .map(mediaEntityMapper::toEntity)
+      .map(MediaEntityMappers::toEntity)
       .forEach(incidentEntity::addMedia);
 
     return incidentEntity;
@@ -57,7 +56,7 @@ public final class IncidentMapper {
       .userId(new UserId(entity.getUser().getFirebaseUid()))
       .locationId(new LocationId(entity.getLocation().getId()))
       .media(entity.getMedia().stream()
-          .map(mediaEntityMapper::toDomain)
+          .map(MediaEntityMappers::toDomain)
           .collect(Collectors.toSet()))
       .title(entity.getTitle())
       .description(entity.getDescription())

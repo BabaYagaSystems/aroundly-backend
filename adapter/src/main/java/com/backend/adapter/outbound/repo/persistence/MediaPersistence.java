@@ -1,7 +1,7 @@
 package com.backend.adapter.outbound.repo.persistence;
 
 import com.backend.adapter.outbound.entity.MediaEntity;
-import com.backend.adapter.outbound.mapper.MediaEntityMapper;
+import com.backend.adapter.outbound.mapper.MediaEntityMappers;
 import com.backend.adapter.outbound.repo.MediaPersistenceRepository;
 import com.backend.domain.media.Media;
 import com.backend.port.outbound.repo.MediaRepository;
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Repository;
 public class MediaPersistence implements MediaRepository {
 
   private final MediaPersistenceRepository repository;
-  private final MediaEntityMapper mapper;
 
   /**
    * Saves a set of media objects to the database.
@@ -36,13 +35,13 @@ public class MediaPersistence implements MediaRepository {
     if (media == null || media.isEmpty()) return Set.of();
 
     List<MediaEntity> entities = media.stream()
-      .map(mapper::toEntity)
+      .map(MediaEntityMappers::toEntity)
       .collect(Collectors.toList());
 
     List<MediaEntity> saved = repository.saveAll(entities);
 
     return saved.stream()
-      .map(mapper::toDomain)
+      .map(MediaEntityMappers::toDomain)
       .collect(Collectors.toSet());
   }
 
@@ -71,6 +70,6 @@ public class MediaPersistence implements MediaRepository {
   public Optional<Media> findByKey(String key) throws Exception {
     if (key == null || key.isEmpty()) return Optional.empty();
 
-    return repository.findByKey(key).map(mapper::toDomain);
+    return repository.findByKey(key).map(MediaEntityMappers::toDomain);
   }
 }
