@@ -14,7 +14,7 @@ public interface IncidentUseCase {
      * Finds an incident by its unique identifier.
      *
      * @param incidentId the identifier of the incident
-     * @return the Happening with the given id
+     * @return the Happening with the given value
      */
     Incident findById(long incidentId);
 
