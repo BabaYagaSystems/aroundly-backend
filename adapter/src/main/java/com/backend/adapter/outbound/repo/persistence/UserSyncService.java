@@ -35,11 +35,9 @@ public class UserSyncService {
         Optional<UserEntity> existingUser = userRepository.findByFirebaseUid(firebaseUser.uid());
 
         if (existingUser.isPresent()) {
-            // Update existing user
             UserEntity user = existingUser.get();
             user.setLastLogin(Instant.now());
 
-            // Optionally update email/name if changed in Firebase
             if (firebaseUser.email() != null && !firebaseUser.email().equals(user.getEmail())) {
                 user.setEmail(firebaseUser.email());
                 log.info("Updated email for user {}", firebaseUser.uid());
@@ -51,7 +49,6 @@ public class UserSyncService {
 
             return userRepository.save(user);
         } else {
-            // Create new user
             UserEntity newUser = UserEntity.builder()
                     .firebaseUid(firebaseUser.uid())
                     .email(firebaseUser.email())
