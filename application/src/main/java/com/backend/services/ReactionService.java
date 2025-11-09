@@ -94,7 +94,7 @@ public class ReactionService implements ReactionUseCase {
    */
   private void ensureIncidentExists(long incidentId) {
     if (!incidentRepository.existsById(incidentId)) {
-      throw new IncidentNotFoundException("Incident not found with id: " + incidentId);
+      throw new IncidentNotFoundException("Incident not found with value: " + incidentId);
     }
   }
 
@@ -105,7 +105,7 @@ public class ReactionService implements ReactionUseCase {
    */
   private void assertUser(ReactToIncidentCommand command) {
     if (!command.hasUserContext()) {
-      throw new IllegalArgumentException("User id is required to mutate reactions");
+      throw new IllegalArgumentException("User value is required to mutate reactions");
     }
   }
 }
