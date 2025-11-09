@@ -1,4 +1,4 @@
-package com.backend.adapter.inbound.auth;
+package com.backend.adapter.outbound.auth;
 
 import com.backend.domain.actor.FirebaseUserInfo;
 import com.google.firebase.auth.FirebaseAuth;

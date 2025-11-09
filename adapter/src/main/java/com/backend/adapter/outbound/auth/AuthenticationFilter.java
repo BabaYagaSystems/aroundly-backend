@@ -1,7 +1,7 @@
-package com.backend.adapter.inbound.auth;
+package com.backend.adapter.outbound.auth;
 
-import static com.backend.adapter.inbound.auth.TokenValidationService.extractToken;
-import static com.backend.adapter.inbound.auth.TokenValidationService.validateToken;
+import static com.backend.adapter.outbound.auth.TokenValidationService.extractToken;
+import static com.backend.adapter.outbound.auth.TokenValidationService.validateToken;
 
 import com.backend.adapter.outbound.repo.persistence.UserSyncService;
 import com.backend.domain.actor.FirebaseUserInfo;

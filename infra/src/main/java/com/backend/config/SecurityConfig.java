@@ -1,6 +1,6 @@
 package com.backend.config;
 
-import com.backend.adapter.inbound.auth.AuthenticationFilter;
+import com.backend.adapter.outbound.auth.AuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
