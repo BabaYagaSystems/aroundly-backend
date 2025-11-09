@@ -1,6 +1,6 @@
 package com.backend.domain.happening;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
 import com.backend.domain.mixins.Actored;
@@ -17,7 +17,6 @@ import java.util.Set;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NonNull;
 
 /**
  * Represents an {@link Incident} that supports expiration
@@ -30,8 +29,8 @@ import lombok.NonNull;
 @Getter
 public class Incident implements Expirable, Actored, Locatable, HasMedia, Reactable {
 
-  private final long id;
-  private final ActorId actorId;
+  private final IncidentId id;
+  private final UserId userId;
   private final LocationId locationId;
   private final SentimentEngagement sentimentEngagement;
   private final Set<Media> media;
@@ -60,7 +59,7 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
   /**
    * Constructs a new {@code Incident} instance with initial values.
    *
-   * @param actorId     the actor who created the incident
+   * @param userId     the actor who created the incident
    * @param locationId  the location where the incident is associated
    * @param media       the media associated with the incident
    * @param title       the title of the incident
@@ -68,8 +67,8 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
    */
   @Builder(toBuilder = true)
   public Incident(
-      long id,
-      ActorId actorId,
+      IncidentId id,
+      UserId userId,
       LocationId locationId,
       String title,
       String description,
@@ -79,7 +78,7 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
       Instant expiresAt) {
 
     this.id = id;
-    this.actorId = actorId;
+    this.userId = userId;
     this.locationId = locationId;
     this.title = title;
     this.description = description;
