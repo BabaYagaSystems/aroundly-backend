@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
@@ -27,7 +27,7 @@ public class IncidentTest {
   @BeforeEach
   void setup() throws URISyntaxException {
     incident = Incident.builder()
-            .actorId(new ActorId("abc"))
+            .userId(new UserId("abc"))
             .locationId(new LocationId(1L))
             .title("title")
             .description("description")

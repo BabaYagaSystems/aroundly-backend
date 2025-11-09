@@ -1,6 +1,6 @@
 package com.backend.services;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
@@ -118,7 +118,7 @@ public class IncidentService implements IncidentUseCase {
         validateCreateIncidentCommand(createIncidentCommand);
 
         try {
-          final ActorId actorId = createIncidentCommand.actorId();
+          final UserId userId = createIncidentCommand.userId();
           final String title = createIncidentCommand.title();
           final String description = createIncidentCommand.description();
           final Set<UploadMediaCommand> media = createIncidentCommand.media();
@@ -131,7 +131,7 @@ public class IncidentService implements IncidentUseCase {
           final Set<Media> uploadedMedia = objectStoragePort.uploadAll(media);
 
           final Incident incident = Incident.builder()
-              .actorId(actorId)
+              .userId(userId)
               .locationId(locationId)
               .title(title)
               .description(description)

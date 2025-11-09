@@ -1,6 +1,6 @@
 package com.backend.port.inbound;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.actor.Role;
 import java.util.Optional;
 import java.util.Set;
@@ -18,7 +18,7 @@ public interface ActorUseCase {
    *
    * @return the actor's identifier
    */
-  ActorId extractId();
+  UserId extractId();
 
   /**
    * Extracts the set of roles assigned to the current actor.

@@ -1,6 +1,6 @@
 package com.backend.services;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
@@ -73,10 +73,10 @@ class IncidentServiceTest {
 
     @Test
     void testFindByUserId() {
-        final ActorId actorId = new ActorId("abc-123");
-        when(incidentRepository.findByUserId(actorId.value())).thenReturn(List.of(incident));
+        final UserId userId = new UserId("abc-123");
+        when(incidentRepository.findByUserId(userId.value())).thenReturn(List.of(incident));
 
-        List<Incident> result = incidentService.findByUserId(actorId.value());
+        List<Incident> result = incidentService.findByUserId(userId.value());
 
         assertEquals(result, List.of(incident));
     }

@@ -1,6 +1,6 @@
 package com.backend.services;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.actor.User;
 import lombok.NonNull;
 import org.springframework.security.core.Authentication;
@@ -37,7 +37,7 @@ public class AuthenticatedUserService {
      *
      * @return Optional containing the user's UID if authenticated, empty otherwise
      */
-    public Optional<@NonNull ActorId> getCurrentUserId() {
+    public Optional<@NonNull UserId> getCurrentUserId() {
         return getCurrentUser().map(User::uid);
     }
 

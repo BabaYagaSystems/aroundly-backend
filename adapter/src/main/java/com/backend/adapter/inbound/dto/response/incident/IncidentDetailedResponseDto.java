@@ -2,6 +2,7 @@ package com.backend.adapter.inbound.dto.response.incident;
 
 import com.backend.adapter.inbound.dto.media.MediaDto;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.Instant;
 import java.util.Set;
 import lombok.Builder;
 
@@ -10,7 +11,7 @@ import lombok.Builder;
  *
  * @param title              short title of the incident
  * @param description        detailed description of the incident
- * @param actorUsername      username of the user who reported/created the incident
+ * @param userUid      username of the user who reported/created the incident
  * @param media              related media (images, videos, etc.)
  * @param confirm            number of confirmations
  * @param deny               number of denials
@@ -42,7 +43,7 @@ public record IncidentDetailedResponseDto(
         description = "Username of the user who reported the incident",
         example = "john_doe"
     )
-    String actorUsername,
+    String userUid,
 
     @Schema(
         description = "Collection of related media files (images, videos, etc.)"
@@ -95,4 +96,10 @@ public record IncidentDetailedResponseDto(
         description = "Human-readable formatted address of the incident location",
         example = "Via del Corso, 20121 Milan, Italy"
     )
-    String address) { }
+    String address,
+
+    @Schema(
+        description = "Describes when the incident was created",
+        example = "created at: 12:10PM"
+    )
+    Instant createdAt) { }

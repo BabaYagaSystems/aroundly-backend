@@ -1,6 +1,6 @@
 package com.backend.domain.mixins;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 
 /**
  * Mixin interface for objects that are associated with an actor.
@@ -12,5 +12,5 @@ public interface Actored {
    *
    * @return the actor identifier
    */
-  ActorId getActorId();
+  UserId getUserId();
 }

@@ -1,6 +1,6 @@
 package com.backend.port.inbound.commands;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import java.util.Set;
 import lombok.Builder;
 
@@ -15,7 +15,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record CreateIncidentCommand(
-    ActorId actorId,
+    UserId userId,
     String title,
     String description,
     Set<UploadMediaCommand> media,

@@ -1,6 +1,6 @@
 package com.backend.adapter.outbound.auth;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.actor.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -24,7 +24,7 @@ final class TokenValidationService {
       FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
 
       User userInfo = User.builder()
-          .uid(new ActorId(decodedToken.getUid()))
+          .uid(new UserId(decodedToken.getUid()))
           .email(decodedToken.getEmail())
           .name(decodedToken.getName())
           .picture(decodedToken.getPicture())

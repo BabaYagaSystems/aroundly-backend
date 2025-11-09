@@ -9,7 +9,7 @@ import lombok.NonNull;
  */
 @Builder
 public record User(
-  @NonNull ActorId uid,
+  @NonNull UserId uid,
   String email,
   String name,
   String picture,
