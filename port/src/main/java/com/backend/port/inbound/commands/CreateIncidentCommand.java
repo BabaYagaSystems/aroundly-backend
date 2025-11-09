@@ -15,7 +15,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record CreateIncidentCommand(
-    long actorId,
+    ActorId actorId,
     String title,
     String description,
     Set<UploadMediaCommand> media,
