@@ -13,13 +13,11 @@ import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfir
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
-import com.backend.adapter.outbound.repo.persistence.UserSyncService;
-import com.backend.domain.actor.User;
+import com.backend.services.UserService;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
-import com.backend.services.AuthenticatedUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -29,7 +27,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -51,19 +48,16 @@ public class IncidentController {
 
   private final IncidentUseCase incidentUseCase;
   private final IncidentResponseMapper incidentResponseMapper;
-  private final UserSyncService userSyncService;
-  private final AuthenticatedUserService tokenValidationService;
+  private final UserService userService;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
       IncidentResponseMapper incidentResponseMapper,
-      UserSyncService userSyncService,
-      AuthenticatedUserService tokenValidationService) {
+      UserService userService) {
 
     this.incidentUseCase = incidentUseCase;
     this.incidentResponseMapper = incidentResponseMapper;
-    this.userSyncService = userSyncService;
-    this.tokenValidationService = tokenValidationService;
+    this.userService = userService;
   }
 
   /**
@@ -218,9 +212,7 @@ public class IncidentController {
       @ApiResponse(responseCode = "200", description = "Actor incidents retrieved successfully"),
       @ApiResponse(responseCode = "400", description = "Invalid actor ID")
   })
-  public ResponseEntity<List<IncidentPreviewResponseDto>> findActorIncidentsInPreview(
-      @PathVariable String id) {
-
+  public ResponseEntity<List<IncidentPreviewResponseDto>> findActorIncidentsInPreview(@PathVariable String id) {
     try {
       List<Incident> incidents = incidentUseCase.findByUserId(id);
       List<IncidentPreviewResponseDto> incidentPreviewResponseDtos = incidents.stream()
@@ -285,12 +277,13 @@ public class IncidentController {
   })
   public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(@PathVariable long id) {
     try {
-      User user = getUserAuthentication().get();
 
-      Incident incident = incidentUseCase.confirm(id, userSyncService.getOrCreateUser(user).getId());
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+      if (userService.isAuthenticated()) {
+        Incident incident = incidentUseCase.confirm(id, userService.getUser().get().uid());
+        IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
-      return ResponseEntity.ok(incidentDetailedResponseDto);
+        return ResponseEntity.ok(incidentDetailedResponseDto);
+      }
     } catch (IncidentNotFoundException e) {
       log.warn("IncidentEntity not found for confirmation: {}", id);
       return ResponseEntity.notFound().build();
@@ -298,6 +291,9 @@ public class IncidentController {
       log.warn("IncidentEntity already confirmed: {}", id);
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).build();
+
   }
 
   /**
@@ -318,11 +314,11 @@ public class IncidentController {
   })
   public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(@PathVariable long id) {
     try {
-      User user = getUserAuthentication().get();
-      Incident incident = incidentUseCase.deny(id, userSyncService.getOrCreateUser(user).getId());
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
-
-      return ResponseEntity.ok(incidentDetailedResponseDto);
+      if (userService.isAuthenticated()) {
+        Incident incident = incidentUseCase.deny(id, userService.getUser().get().uid());
+        IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+        return ResponseEntity.ok(incidentDetailedResponseDto);
+      }
     } catch (IncidentNotFoundException e) {
       log.warn("IncidentEntity not found for denial: {}", id);
       return ResponseEntity.notFound().build();
@@ -330,6 +326,8 @@ public class IncidentController {
       log.warn("IncidentEntity already denied: {}", id);
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).build();
   }
 
   /**
@@ -386,17 +384,5 @@ public class IncidentController {
       log.warn("IncidentEntity not found for deletion: {}", id);
       return ResponseEntity.notFound().build();
     }
-  }
-
-  private Optional<User> getUserAuthentication() {
-    try {
-      if (tokenValidationService.isAuthenticated()) {
-        return Optional.of(tokenValidationService.requireCurrentUser());
-      }
-    } catch (IllegalArgumentException e) {
-      log.error("Missing or malformed Authorization header");
-    }
-
-    return Optional.empty();
   }
 }

@@ -3,7 +3,7 @@ package com.backend.adapter.outbound.auth;
 import static com.backend.adapter.outbound.auth.TokenValidationService.extractToken;
 import static com.backend.adapter.outbound.auth.TokenValidationService.validateToken;
 
-import com.backend.adapter.outbound.repo.persistence.UserSyncService;
+import com.backend.services.UserService;
 import com.backend.domain.actor.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -32,7 +32,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class AuthenticationFilter extends OncePerRequestFilter {
 
-  private final UserSyncService userSyncService;
+  private final UserService userService;
 
   @Override
   protected void doFilterInternal(
@@ -51,7 +51,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 
           if (userInfo.isPresent()) {
             try {
-              userSyncService.syncUser(userInfo.get());
+              userService.create(userInfo.get());
             } catch (Exception e) {
               log.error("Failed to sync user to database: {}", userInfo.get().uid(), e);
             }

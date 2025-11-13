@@ -4,7 +4,7 @@ package com.backend.adapter.inbound.rest;
 import com.backend.adapter.outbound.entity.UserEntity;
 import com.backend.adapter.outbound.repo.UserPersistenceRepository;
 import com.backend.domain.actor.User;
-import com.backend.services.AuthenticatedUserService;
+import com.backend.port.inbound.UserUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ import java.util.Optional;
 @Slf4j
 public class FirebaseController {
 
-    private final AuthenticatedUserService authenticatedUserService;
+    private final UserUseCase userUseCase;
     private final UserPersistenceRepository userPersistenceRepository;
 
     /**
@@ -31,7 +31,7 @@ public class FirebaseController {
      */
     @GetMapping("/test")
     public ResponseEntity<TestResponse> testAuth() {
-        Optional<User> firebaseUser = authenticatedUserService.getCurrentUser();
+        Optional<User> firebaseUser = userUseCase.getUser();
 
         if (firebaseUser.isEmpty()) {
             return ResponseEntity.ok(new TestResponse(
@@ -55,7 +55,7 @@ public class FirebaseController {
 
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser() {
-        return authenticatedUserService.getCurrentUser()
+        return userUseCase.getUser()
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.status(401).build());
     }

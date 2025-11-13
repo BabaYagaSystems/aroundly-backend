@@ -170,7 +170,7 @@ class IncidentControllerTest {
     Incident confirmedIncident = createConfirmedIncident();
     IncidentDetailedResponseDto confirmedIncidentDetailedResponseDto = createConfirmedIncidentDetailedResponseDto();
 
-    when(incidentUseCase.confirm(INCIDENT_ID, 1L)).thenReturn(confirmedIncident);
+    when(incidentUseCase.confirm(INCIDENT_ID, new UserId("abc"))).thenReturn(confirmedIncident);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
         controller.confirmIncidentPresence(INCIDENT_ID);
@@ -186,7 +186,7 @@ class IncidentControllerTest {
   void testDenyIncidentPresence() throws IOException {
     Incident deniedIncident = createDeniedIncident();
     IncidentDetailedResponseDto deniedIncidentDetailedResponseDto = createDeniedIncidentDetailedResponseDto();
-    when(incidentUseCase.deny(INCIDENT_ID, 1L)).thenReturn(deniedIncident);
+    when(incidentUseCase.deny(INCIDENT_ID, new UserId("abc"))).thenReturn(deniedIncident);
 
     ResponseEntity<IncidentDetailedResponseDto> response =
         controller.denyIncidentPresence(INCIDENT_ID);

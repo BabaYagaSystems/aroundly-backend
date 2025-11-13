@@ -5,15 +5,13 @@ import com.backend.adapter.inbound.dto.request.IncidentRequestDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
 import com.backend.adapter.outbound.factory.MediaPreviewFactory;
-import com.backend.adapter.outbound.repo.persistence.UserSyncService;
+import com.backend.services.UserService;
 import com.backend.domain.actor.UserId;
-import com.backend.domain.actor.User;
 import com.backend.domain.happening.Incident;
 import com.backend.domain.location.Location;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.UploadMediaCommand;
 import com.backend.port.outbound.repo.LocationRepository;
-import com.backend.services.AuthenticatedUserService;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Set;
@@ -22,16 +20,26 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * Maps inbound HTTP DTOs into application commands and domain models back into response DTOs
+ * for incident-related endpoints. Handles user extraction, media transformation, and
+ * location lookups to keep controllers thin.
+ */
 @Component
 @RequiredArgsConstructor
 public class IncidentResponseMapper {
 
-  private final UserSyncService userSyncService;
-  private final AuthenticatedUserService authenticatedUserService;
+  private final UserService userService;
   private final LocationRepository locationRepository;
   private final MediaPreviewFactory mediaPreviewFactory;
 
-  public CreateIncidentCommand toCreateIncidentCommand(IncidentRequestDto incidentRequestDto) {
+  /**
+   * Converts an incident creation request into a command understood by the application layer.
+   *
+   * @param incidentRequestDto payload received from the client
+   * @return command including authenticated user id, metadata, and media uploads
+   */
+  public CreateIncidentCommand toCreateIncidentCommand(final IncidentRequestDto incidentRequestDto) {
     final Set<UploadMediaCommand> mediaCommands = toUploads(incidentRequestDto.files());
 
     return new CreateIncidentCommand(
@@ -43,7 +51,13 @@ public class IncidentResponseMapper {
         incidentRequestDto.lon());
   }
 
-  public IncidentDetailedResponseDto toIncidentDetailedResponseDto(Incident incident) {
+  /**
+   * Builds the detailed incident response view, including media, stats, and location data.
+   *
+   * @param incident domain incident
+   * @return DTO returned by the incident detail endpoint
+   */
+  public IncidentDetailedResponseDto toIncidentDetailedResponseDto(final Incident incident) {
     final Location location = extractLocation(incident);
     final Set<MediaDto> mediaDtos = toMediaDto(incident);
 
@@ -65,7 +79,13 @@ public class IncidentResponseMapper {
         .build();
   }
 
-  public IncidentPreviewResponseDto toIncidentPreviewResponseDto(Incident incident) {
+  /**
+   * Builds a lightweight incident preview response used for list endpoints.
+   *
+   * @param incident domain incident
+   * @return DTO containing basic info suitable for feed rendering
+   */
+  public IncidentPreviewResponseDto toIncidentPreviewResponseDto(final Incident incident) {
     final Set<MediaDto> mediaDtos = toMediaDto(incident);
     final Location location = extractLocation(incident);
 
@@ -79,17 +99,25 @@ public class IncidentResponseMapper {
         .build();
   }
 
-  private Set<MediaDto> toMediaDto(Incident incident) {
+  /**
+   * Converts the incident's media attachments into DTOs using the preview factory.
+   */
+  private Set<MediaDto> toMediaDto(final Incident incident) {
     return mediaPreviewFactory.build(incident.getMedia());
   }
 
-  private Location extractLocation(Incident incident) {
+  /**
+   * Resolves the location entity referenced by the incident.
+   */
+  private Location extractLocation(final Incident incident) {
     return locationRepository.findById(incident.getLocationId().value());
   }
 
+  /**
+   * Pulls the authenticated user's id from the security context.
+   */
   private UserId extractUserId() {
-    final User user = authenticatedUserService.requireCurrentUser();
-    final String extractedUid = userSyncService.getOrCreateUser(user).getFirebaseUid();
+    final String extractedUid = userService.getUser().get().uid().value();
 
     return new UserId(extractedUid);
   }
@@ -100,7 +128,7 @@ public class IncidentResponseMapper {
    * @param files uploaded files
    * @return upload commands
    */
-  private static Set<UploadMediaCommand> toUploads(Set<MultipartFile> files) {
+  private static Set<UploadMediaCommand> toUploads(final Set<MultipartFile> files) {
     if (files == null || files.isEmpty()) return Set.of();
 
     return files.stream()
@@ -108,7 +136,10 @@ public class IncidentResponseMapper {
         .collect(Collectors.toSet());
   }
 
-  private static UploadMediaCommand toUpload(MultipartFile file) {
+  /**
+   * Converts a single multipart file into an upload command, sanitizing metadata and guarding IO.
+   */
+  private static UploadMediaCommand toUpload(final MultipartFile file) {
     try {
       return new UploadMediaCommand(
           file.getInputStream(),
@@ -120,11 +151,17 @@ public class IncidentResponseMapper {
     }
   }
 
-  private static String sanitizeFilename(String name) {
+  /**
+   * Provides a safe filename that strips characters unsupported by storage providers.
+   */
+  private static String sanitizeFilename(final String name) {
     if (name == null || name.isBlank()) return "file";
     return name.replaceAll("[^a-zA-Z0-9._-]", "_");
   }
 
+  /**
+   * Ensures uploads always carry a content type, defaulting to octet-stream when missing.
+   */
   private static String safeContentType(String ct) {
     return (ct == null || ct.isBlank()) ? "application/octet-stream" : ct;
   }
