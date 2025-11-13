@@ -1,19 +1,19 @@
 package com.backend.adapter.inbound.rest;
 
+import static com.backend.adapter.inbound.mapper.LocationMapper.toRadiusCommand;
+
 import com.backend.adapter.inbound.dto.request.IncidentRequestDto;
 import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
-import com.backend.adapter.inbound.mapper.IncidentMapper;
-import com.backend.adapter.inbound.mapper.LocationMapper;
-import com.backend.adapter.inbound.mapper.assembler.IncidentDetailedDtoAssembler;
-import com.backend.adapter.inbound.mapper.assembler.IncidentPreviewDtoAssembler;
+import com.backend.adapter.inbound.mapper.IncidentResponseMapper;
 import com.backend.adapter.inbound.rest.exception.incident.ActorNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.DuplicateIncidentException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfirmedException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
+import com.backend.services.UserService;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
@@ -21,6 +21,7 @@ import com.backend.port.inbound.commands.RadiusCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
@@ -31,15 +32,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller exposing CRUD and query endpoints for {@link Incident} resources.
@@ -54,23 +47,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class IncidentController {
 
   private final IncidentUseCase incidentUseCase;
-  private final IncidentDetailedDtoAssembler incidentDetailedResponseAssembler;
-  private final IncidentMapper incidentMapper;
-  private final LocationMapper locationMapper;
-  private final IncidentPreviewDtoAssembler incidentPreviewDtoAssembler;
+  private final IncidentResponseMapper incidentResponseMapper;
+  private final UserService userService;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
-      IncidentDetailedDtoAssembler incidentDetailedResponseAssembler,
-      IncidentMapper incidentMapper,
-      LocationMapper locationMapper,
-      IncidentPreviewDtoAssembler incidentPreviewDtoAssembler) {
+      IncidentResponseMapper incidentResponseMapper,
+      UserService userService) {
 
     this.incidentUseCase = incidentUseCase;
-    this.incidentMapper = incidentMapper;
-    this.incidentDetailedResponseAssembler = incidentDetailedResponseAssembler;
-    this.locationMapper = locationMapper;
-    this.incidentPreviewDtoAssembler = incidentPreviewDtoAssembler;
+    this.incidentResponseMapper = incidentResponseMapper;
+    this.userService = userService;
   }
 
   /**
@@ -89,15 +76,15 @@ public class IncidentController {
       @ApiResponse(responseCode = "400", description = "Invalid input data"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already exists")
   })
+  @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<IncidentDetailedResponseDto> create(
       @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
 
     try {
-      CreateIncidentCommand createIncidentCommand = incidentMapper
-          .toCreateIncidentCommand(incidentRequestDto);
+      final CreateIncidentCommand createIncidentCommand = incidentResponseMapper.toCreateIncidentCommand(incidentRequestDto);
 
       Incident incident = incidentUseCase.create(createIncidentCommand);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
       return new ResponseEntity<>(incidentDetailedResponseDto, HttpStatus.CREATED);
 
@@ -132,11 +119,11 @@ public class IncidentController {
       @RequestBody @Valid IncidentRequestDto newIncidentRequestDto) {
 
     try {
-      CreateIncidentCommand newCreateIncidentCommand = incidentMapper
+      CreateIncidentCommand newCreateIncidentCommand = incidentResponseMapper
           .toCreateIncidentCommand(newIncidentRequestDto);
 
       Incident updatedIncident = incidentUseCase.update(id, newCreateIncidentCommand);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(updatedIncident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(updatedIncident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -166,9 +153,9 @@ public class IncidentController {
   })
   public ResponseEntity<IncidentPreviewResponseDto> getIncidentInPreview(@PathVariable long id) {
     try {
-      Incident incident = (Incident) incidentUseCase.findById(id);
+      Incident incident = incidentUseCase.findById(id);
       IncidentPreviewResponseDto incidentPreviewResponseDto =
-          incidentPreviewDtoAssembler.toPreviewDto(incident);
+          incidentResponseMapper.toIncidentPreviewResponseDto(incident);
 
       return ResponseEntity.ok(incidentPreviewResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -198,7 +185,7 @@ public class IncidentController {
   public ResponseEntity<IncidentDetailedResponseDto> getIncidentInDetails(@PathVariable long id) {
     try {
       Incident incident = incidentUseCase.findById(id);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
+      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -225,13 +212,11 @@ public class IncidentController {
       @ApiResponse(responseCode = "200", description = "Actor incidents retrieved successfully"),
       @ApiResponse(responseCode = "400", description = "Invalid actor ID")
   })
-  public ResponseEntity<List<IncidentPreviewResponseDto>> findActorIncidentsInPreview(
-      @PathVariable String id) {
-
+  public ResponseEntity<List<IncidentPreviewResponseDto>> findActorIncidentsInPreview(@PathVariable String id) {
     try {
-      List<Incident> incidents = incidentUseCase.findByActorId(id);
+      List<Incident> incidents = incidentUseCase.findByUserId(id);
       List<IncidentPreviewResponseDto> incidentPreviewResponseDtos = incidents.stream()
-          .map(incidentPreviewDtoAssembler::toPreviewDto)
+          .map(incidentResponseMapper::toIncidentPreviewResponseDto)
           .toList();
 
       return ResponseEntity.ok(incidentPreviewResponseDtos);
@@ -260,10 +245,10 @@ public class IncidentController {
       @ModelAttribute @Valid RadiusRequestDto radiusRequestDto) {
 
     try {
-      RadiusCommand radiusCommand = locationMapper.toRadiusCommand(radiusRequestDto);
+      RadiusCommand radiusCommand = toRadiusCommand(radiusRequestDto);
       List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
       List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
-          .map(incidentPreviewDtoAssembler::toPreviewDto)
+          .map(incidentResponseMapper::toIncidentPreviewResponseDto)
           .toList();
 
 
@@ -291,12 +276,14 @@ public class IncidentController {
       @ApiResponse(responseCode = "409", description = "IncidentEntity already confirmed")
   })
   public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(@PathVariable long id) {
-
     try {
-      Incident incident = incidentUseCase.confirm(id);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
 
-      return ResponseEntity.ok(incidentDetailedResponseDto);
+      if (userService.isAuthenticated()) {
+        Incident incident = incidentUseCase.confirm(id, userService.getUser().get().uid());
+        IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+
+        return ResponseEntity.ok(incidentDetailedResponseDto);
+      }
     } catch (IncidentNotFoundException e) {
       log.warn("IncidentEntity not found for confirmation: {}", id);
       return ResponseEntity.notFound().build();
@@ -304,6 +291,9 @@ public class IncidentController {
       log.warn("IncidentEntity already confirmed: {}", id);
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).build();
+
   }
 
   /**
@@ -324,10 +314,11 @@ public class IncidentController {
   })
   public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(@PathVariable long id) {
     try {
-      Incident incident = incidentUseCase.deny(id);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentDetailedResponseAssembler.toDetailedDto(incident);
-
-      return ResponseEntity.ok(incidentDetailedResponseDto);
+      if (userService.isAuthenticated()) {
+        Incident incident = incidentUseCase.deny(id, userService.getUser().get().uid());
+        IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+        return ResponseEntity.ok(incidentDetailedResponseDto);
+      }
     } catch (IncidentNotFoundException e) {
       log.warn("IncidentEntity not found for denial: {}", id);
       return ResponseEntity.notFound().build();
@@ -335,6 +326,8 @@ public class IncidentController {
       log.warn("IncidentEntity already denied: {}", id);
       return ResponseEntity.status(HttpStatus.CONFLICT).build();
     }
+
+    return ResponseEntity.status(HttpStatus.CONFLICT).build();
   }
 
   /**

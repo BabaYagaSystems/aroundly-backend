@@ -13,7 +13,7 @@ public interface IncidentRepository {
    * Finds a Happening by its unique identifier.
    *
    * @param incidentId the identifier of the Happening
-   * @return the Happening with the given id
+   * @return the Happening with the given value
    */
   Optional<Incident> findById(long incidentId);
 
@@ -21,7 +21,7 @@ public interface IncidentRepository {
    * Checks if an Incident exists by its unique identifier.
    *
    * @param incidentId the identifier of the Happening
-   * @return the Happening with the given id
+   * @return the Happening with the given value
    */
   boolean existsById(long incidentId);
 

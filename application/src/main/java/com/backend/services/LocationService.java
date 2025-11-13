@@ -39,7 +39,7 @@ public class LocationService implements LocationUseCase {
     /**
      * Finds a location by its unique identifier.
      *
-     * @param locationId id of the location
+     * @param locationId value of the location
      * @return the matching location, or null if not found
      */
     @Override
@@ -58,22 +58,18 @@ public class LocationService implements LocationUseCase {
         final double latitude = coordinatesCommand.lat();
         final double longitude = coordinatesCommand.lon();
 
-        return locationRepository
-                .findByCoordinate(latitude, longitude)
-                .orElseGet(() -> createLocation(longitude, latitude));
+          return locationRepository
+              .findByCoordinate(latitude, longitude)
+              .orElseGet(() -> createLocation(longitude, latitude));
     }
-
-
-    /// WHY MANUALLY ASSIGN THE ID???
 
     private Location createLocation(double longitude, double latitude) {
         String address = reverseGeocode(longitude, latitude);
-        Location newLocation = new Location(
-                new LocationId(0L),
-//            locationIdGenerator.nextId(),
-            longitude,
-            latitude,
-            address);
+        Location newLocation = Location.builder()
+          .longitude(longitude)
+          .latitude(latitude)
+          .address(address)
+          .build();
 
         return locationRepository.save(newLocation);
     }

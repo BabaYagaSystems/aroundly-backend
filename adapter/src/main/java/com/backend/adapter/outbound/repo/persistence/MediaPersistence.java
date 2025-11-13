@@ -21,7 +21,6 @@ import org.springframework.stereotype.Repository;
 public class MediaPersistence implements MediaRepository {
 
   private final MediaPersistenceRepository repository;
-  private final MediaEntityMapper mapper;
 
   /**
    * Saves a set of media objects to the database.
@@ -36,13 +35,13 @@ public class MediaPersistence implements MediaRepository {
     if (media == null || media.isEmpty()) return Set.of();
 
     List<MediaEntity> entities = media.stream()
-      .map(mapper::toEntity)
+      .map(MediaEntityMapper::toEntity)
       .collect(Collectors.toList());
 
     List<MediaEntity> saved = repository.saveAll(entities);
 
     return saved.stream()
-      .map(mapper::toDomain)
+      .map(MediaEntityMapper::toDomain)
       .collect(Collectors.toSet());
   }
 
@@ -71,6 +70,6 @@ public class MediaPersistence implements MediaRepository {
   public Optional<Media> findByKey(String key) throws Exception {
     if (key == null || key.isEmpty()) return Optional.empty();
 
-    return repository.findByKey(key).map(mapper::toDomain);
+    return repository.findByKey(key).map(MediaEntityMapper::toDomain);
   }
 }

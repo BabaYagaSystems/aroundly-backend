@@ -1,6 +1,6 @@
 package com.backend.domain.happening;
 
-import com.backend.domain.actor.ActorId;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
 import com.backend.domain.mixins.Actored;
@@ -17,7 +17,6 @@ import java.util.Set;
 
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NonNull;
 
 /**
  * Represents an {@link Incident} that supports expiration
@@ -30,8 +29,8 @@ import lombok.NonNull;
 @Getter
 public class Incident implements Expirable, Actored, Locatable, HasMedia, Reactable {
 
-  private final long id;
-  private final ActorId actorId;
+  private final IncidentId id;
+  private final UserId userId;
   private final LocationId locationId;
   private final SentimentEngagement sentimentEngagement;
   private final Set<Media> media;
@@ -46,14 +45,21 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
   private Instant expiresAt;
 
   /**
-   * Extension applied when a confirmation is added (capped at 30 minutes max).
+   * Extension applied every 5 confirmations: +2 minutes (capped at 30 minutes max from creation).
    */
-  private static final Duration EXTENSION = Duration.ofMinutes(5);
+  private static final Duration CONFIRM_EXTENSION = Duration.ofMinutes(2);
+  private static final int CONFIRMS_THRESHOLD = 5;
+
+  /**
+   * Reduction applied every 3 consecutive denies: -5 minutes (but never before current time).
+   */
+  private static final Duration DENY_REDUCTION = Duration.ofMinutes(5);
+  private static final int DENIES_THRESHOLD = 3;
 
   /**
    * Constructs a new {@code Incident} instance with initial values.
    *
-   * @param actorId     the actor who created the incident
+   * @param userId     the actor who created the incident
    * @param locationId  the location where the incident is associated
    * @param media       the media associated with the incident
    * @param title       the title of the incident
@@ -61,8 +67,8 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
    */
   @Builder(toBuilder = true)
   public Incident(
-      long id,
-      ActorId actorId,
+      IncidentId id,
+      UserId userId,
       LocationId locationId,
       String title,
       String description,
@@ -72,7 +78,7 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
       Instant expiresAt) {
 
     this.id = id;
-    this.actorId = actorId;
+    this.userId = userId;
     this.locationId = locationId;
     this.title = title;
     this.description = description;
@@ -93,7 +99,7 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
    * @return {@code true} if the incident should be removed.
    */
   public boolean isDeleted() {
-    return engagementStats.consecutiveDenies() >= 3 || isExpired();
+    return engagementStats.consecutiveDenies() >= DENIES_THRESHOLD || isExpired();
   }
 
   /**
@@ -101,19 +107,27 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
    *
    * - Increments the confirmation counter.
    * - Resets the consecutive denies counter.
-   * - Extends expiration time by 5 minutes, but never beyond 30 minutes
-   *   from creation.
+   * - Every 5 confirms: extends expiration time by 2 minutes (capped at 30 minutes from creation).
    */
   public synchronized void confirmIncident() {
     if (Instant.now().isAfter(expiresAt)) return;
 
-    Instant maxExpiry = createdAt().plus(TTL); // now +30 minutes
-    Instant newExpiry = getExpiresAt().plus(EXTENSION); // +5 minutes
-
-    if (newExpiry.isAfter(maxExpiry)) newExpiry = maxExpiry;
-
+    int oldConfirms = engagementStats.confirms();
     engagementStats = engagementStats.addConfirm();
-    this.overrideExpiresAt(newExpiry);
+    int newConfirms = engagementStats.confirms();
+
+    // Check if we crossed a threshold of 5 confirms
+    if (newConfirms % CONFIRMS_THRESHOLD == 0 && newConfirms > oldConfirms) {
+      Instant maxExpiry = createdAt().plus(TTL); // creation time + 30 minutes
+      Instant newExpiry = getExpiresAt().plus(CONFIRM_EXTENSION); // current expiry + 2 minutes
+
+      // Cap at 30 minutes from creation
+      if (newExpiry.isAfter(maxExpiry)) {
+        newExpiry = maxExpiry;
+      }
+
+      this.overrideExpiresAt(newExpiry);
+    }
   }
 
   /**
@@ -121,9 +135,25 @@ public class Incident implements Expirable, Actored, Locatable, HasMedia, Reacta
    *
    * - Increments the denial counter.
    * - Increments the consecutive denial counter.
+   * - Every 3 consecutive denies: reduces expiration time by 5 minutes (but never before current time).
    */
   public synchronized void denyIncident() {
+    int oldConsecutiveDenies = engagementStats.consecutiveDenies();
     engagementStats = engagementStats.addDeny();
+    int newConsecutiveDenies = engagementStats.consecutiveDenies();
+
+    // Check if we reached exactly 3 consecutive denies
+    if (newConsecutiveDenies == DENIES_THRESHOLD && newConsecutiveDenies > oldConsecutiveDenies) {
+      Instant now = Instant.now();
+      Instant newExpiry = getExpiresAt().minus(DENY_REDUCTION); // current expiry - 5 minutes
+
+      // Never set expiry before current time
+      if (newExpiry.isBefore(now)) {
+        newExpiry = now;
+      }
+
+      this.overrideExpiresAt(newExpiry);
+    }
   }
 
   /**

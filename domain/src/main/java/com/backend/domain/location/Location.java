@@ -1,5 +1,6 @@
 package com.backend.domain.location;
 
+import lombok.Builder;
 import lombok.NonNull;
 
 /**
@@ -11,7 +12,8 @@ import lombok.NonNull;
  * @param latitude  the latitude coordinate
  * @param address   the address of location
  */
-public record Location(@NonNull LocationId id, double longitude, double latitude, String address) {
+@Builder(toBuilder = true)
+public record Location(LocationId id, double longitude, double latitude, String address) {
 
   public Location {
     if (latitude < -90 || latitude > 90)

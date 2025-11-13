@@ -16,7 +16,7 @@ import lombok.NonNull;
 public record Comment(
     @NonNull String text,
     @NonNull HappeningId happeningId,
-    @NonNull ActorId actorId,
+    @NonNull UserId userId,
     Instant createdAt,
     SentimentEngagement getSentimentEngagement) implements TimeStamped, Reactable {
 

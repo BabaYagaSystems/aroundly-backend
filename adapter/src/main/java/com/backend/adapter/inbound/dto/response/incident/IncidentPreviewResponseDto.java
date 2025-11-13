@@ -1,8 +1,8 @@
 package com.backend.adapter.inbound.dto.response.incident;
 
 import com.backend.adapter.inbound.dto.media.MediaDto;
-import com.backend.domain.media.Media;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.Instant;
 import java.util.Set;
 import lombok.Builder;
 
@@ -39,4 +39,10 @@ public record IncidentPreviewResponseDto(
         description = "Longitude coordinate where the incident is located",
         example = "13.4050"
     )
-    double lon) { }
+    double lon,
+
+    @Schema(
+        description = "Describes when the incident was created",
+        example = "created at: 12:10PM"
+    )
+    Instant createdAt) { }

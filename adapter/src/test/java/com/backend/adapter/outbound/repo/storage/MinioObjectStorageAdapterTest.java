@@ -5,14 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.backend.adapter.outbound.repo.persistence.MediaPersistence;
 import com.backend.adapter.outbound.storage.MinioObjectStorageAdapter;
 import com.backend.domain.media.Media;
 import com.backend.port.inbound.commands.UploadMediaCommand;
@@ -24,7 +22,6 @@ import io.minio.RemoveObjectsArgs;
 import io.minio.Result;
 import io.minio.messages.DeleteError;
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -57,7 +54,6 @@ class MinioObjectStorageAdapterTest {
   @Test
   void testUploadMediaSet() throws Exception {
     when(minioClient.bucketExists(any(BucketExistsArgs.class))).thenReturn(true);
-//    when(persistence.saveAll(anySet())).thenAnswer(inv -> inv.getArgument(0));
 
     UploadMediaCommand mediaCommand = new UploadMediaCommand(
         new ByteArrayInputStream(new byte[0]),

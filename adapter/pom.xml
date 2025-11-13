@@ -21,7 +21,6 @@
         <slf4j.version>2.0.13</slf4j.version>
         <logback.version>1.5.18</logback.version>
         <jackson.databind.version>2.18.2</jackson.databind.version>
-        <mapstruct.version>1.5.5.Final</mapstruct.version>
         <openapi.version>2.3.0</openapi.version>
     </properties>
 
@@ -55,12 +54,6 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
             <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <version>${mapstruct.version}</version>
         </dependency>
 
         <dependency>

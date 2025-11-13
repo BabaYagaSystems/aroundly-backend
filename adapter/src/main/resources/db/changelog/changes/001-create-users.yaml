@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-users
+      author: babayaga
+      preConditions:
+        - onFail: WARN
+        - onError: WARN
+        - not:
+            sequenceExists:
+              sequenceName: user_id_seq
+      changes:
+        - createSequence:
+            sequenceName: user_id_seq
+        - sqlFile:
+            path: ../sql/001-create-users-table.sql
+            relativeToChangelogFile: true
+
+        - sql:
+            sql: ALTER TABLE users OWNER TO ${schema.owner}

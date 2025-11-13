@@ -79,7 +79,7 @@ class LocationServiceTest {
 //
 //    Location result = locationService.findByCoordinates(command);
 //
-//    //assertEquals(newId, result.id());
+//    //assertEquals(newId, result.value());
 //    assertEquals(22.5, result.longitude());
 //    assertEquals(11.5, result.latitude());
 //    assertEquals("Generated address", result.address());

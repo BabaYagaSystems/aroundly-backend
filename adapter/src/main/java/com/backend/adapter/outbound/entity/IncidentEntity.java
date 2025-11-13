@@ -26,7 +26,7 @@ public class IncidentEntity {
   private String description;
 
   @ManyToOne
-  @JoinColumn(name = "location_id", foreignKey = @ForeignKey(name = "FK_HAPPENING_LOCATION"))
+  @JoinColumn(name = "location_id", foreignKey = @ForeignKey(name = "FK_INCIDENT_LOCATION"))
   private LocationEntity location;
 
   @OneToMany(mappedBy = "incidentEntity", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -34,8 +34,11 @@ public class IncidentEntity {
   private Set<MediaEntity> media = new HashSet<>();
 
   @ManyToOne
-  @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "FK_HAPPENING_CLIENT"))
-  private ClientEntity client;
+  @JoinColumn(
+      name = "user_uid",
+      referencedColumnName = "firebase_uid",
+      foreignKey = @ForeignKey(name = "FK_INCIDENT_USER"))
+  private UserEntity user;
 
   private Instant timePosted;
   private double range;
