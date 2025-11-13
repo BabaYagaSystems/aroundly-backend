@@ -199,7 +199,7 @@ public class IncidentService implements IncidentUseCase {
      * @throws IncidentAlreadyConfirmedException if the incident is already confirmed
      */
     @Override
-    public Incident confirm(final long incidentId, final long userId)
+    public Incident confirm(final long incidentId, final UserId userId)
             throws IncidentNotFoundException, IncidentAlreadyConfirmedException {
 
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");
@@ -241,7 +241,7 @@ public class IncidentService implements IncidentUseCase {
      * @throws IncidentAlreadyDeniedException if the incident is already denied
      */
     @Override
-    public Incident deny(final long incidentId, final long userId)
+    public Incident deny(final long incidentId, final UserId userId)
             throws IncidentNotFoundException, IncidentAlreadyDeniedException {
 
         if (incidentId <= 0) throw new IllegalArgumentException("Incident ID must be positive");

@@ -3,6 +3,7 @@ package com.backend.adapter.outbound.repo.persistence;
 import com.backend.adapter.outbound.entity.IncidentEngagementEntity;
 import com.backend.adapter.outbound.repo.IncidentEngagementPersistenceRepository;
 import com.backend.adapter.outbound.repo.IncidentPersistenceRepository;
+import com.backend.domain.actor.UserId;
 import com.backend.domain.reactions.IncidentEngagementType;
 import com.backend.port.outbound.repo.IncidentEngagementRepository;
 import java.time.Instant;
@@ -20,19 +21,19 @@ public class IncidentEngagementPersistence implements IncidentEngagementReposito
 
   @Override
   @Transactional(readOnly = true)
-  public Optional<IncidentEngagementType> findUserEngagement(long incidentId, long userId) {
-    return engagementRepository.findByIncident_IdAndUserId(incidentId, userId)
+  public Optional<IncidentEngagementType> findUserEngagement(long incidentId, UserId userId) {
+    return engagementRepository.findByIncidentIdAndUserId(incidentId, userId.value())
         .map(IncidentEngagementEntity::getEngagementType);
   }
 
   @Override
   @Transactional
-  public void saveEngagement(long incidentId, long userId, IncidentEngagementType type) {
+  public void saveEngagement(long incidentId, UserId userId, IncidentEngagementType type) {
     IncidentEngagementEntity entity = engagementRepository
-        .findByIncident_IdAndUserId(incidentId, userId)
+        .findByIncidentIdAndUserId(incidentId, userId.value())
         .orElseGet(() -> IncidentEngagementEntity.builder()
             .incident(incidentRepository.getReferenceById(incidentId))
-            .userId(userId)
+            .userId(userId.value())
             .build());
 
     entity.setEngagementType(type);

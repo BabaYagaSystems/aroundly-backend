@@ -34,7 +34,7 @@ public class IncidentEngagementEntity {
   @JoinColumn(name = "incident_id", foreignKey = @ForeignKey(name = "FK_INCIDENT_ENGAGEMENT_INCIDENT"))
   private IncidentEntity incident;
 
-  private long userId;
+  private String userId;
 
   @Enumerated(EnumType.STRING)
   private IncidentEngagementType engagementType;

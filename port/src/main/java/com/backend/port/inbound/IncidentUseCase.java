@@ -1,5 +1,6 @@
 package com.backend.port.inbound;
 
+import com.backend.domain.actor.UserId;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
@@ -68,7 +69,7 @@ public interface IncidentUseCase {
      * @param incidentId the identifier of the incident
      * @return the updated incident with extended lifespan
      */
-    Incident confirm(long incidentId, long userId);
+    Incident confirm(long incidentId, UserId userId);
 
     /**
      * Registers a denial for the given incident.
@@ -80,7 +81,7 @@ public interface IncidentUseCase {
      * @param incidentId the unique identifier of the incident
      * @return the updated {@link Incident} after the denial has been applied
      */
-    Incident deny(long incidentId, long userId);
+    Incident deny(long incidentId, UserId userId);
 
     /**
      * Deletes the given incident if it has expired.
