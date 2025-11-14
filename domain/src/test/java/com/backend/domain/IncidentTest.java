@@ -25,7 +25,7 @@ public class IncidentTest {
   private Incident incident;
 
   @BeforeEach
-  void setup() throws URISyntaxException {
+  void setup() {
     incident = Incident.builder()
             .userId(new UserId("abc"))
             .locationId(new LocationId(1L))

@@ -57,6 +57,8 @@ public class IncidentPersistence implements IncidentRepository {
 
   @Override
   public List<Incident> findByUserId(String userId) {
-      return List.of();
+      return incidentPersistenceRepository.findByUserFirebaseUid(userId).stream()
+          .map(incidentMapper::mapToDomain)
+          .toList();
   }
 }

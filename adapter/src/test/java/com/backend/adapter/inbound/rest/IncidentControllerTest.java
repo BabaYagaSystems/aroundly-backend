@@ -1,393 +1,351 @@
 package com.backend.adapter.inbound.rest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.backend.adapter.inbound.dto.media.MediaDto;
 import com.backend.adapter.inbound.dto.request.IncidentRequestDto;
 import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
-import com.backend.adapter.inbound.dto.media.MediaDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
+import com.backend.adapter.inbound.mapper.IncidentResponseMapper;
+import com.backend.adapter.inbound.rest.exception.incident.ActorNotFoundException;
+import com.backend.adapter.inbound.rest.exception.incident.DuplicateIncidentException;
+import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfirmedException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
+import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
+import com.backend.domain.actor.Role;
+import com.backend.domain.actor.User;
 import com.backend.domain.actor.UserId;
 import com.backend.domain.happening.Incident;
+import com.backend.domain.happening.IncidentId;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
 import com.backend.domain.reactions.EngagementStats;
+import com.backend.domain.reactions.SentimentEngagement;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
-import com.backend.port.inbound.commands.UploadMediaCommand;
+import com.backend.services.UserService;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.multipart.MultipartFile;
 
-@ExtendWith(SpringExtension.class)
-@Disabled
+@ExtendWith(MockitoExtension.class)
 class IncidentControllerTest {
 
-  private static final long HAPPENING_ID = 1L;
-  private static final long INCIDENT_ID = 2L;
-  private static final long NON_EXISTING_INCIDENT_ID = 7L;
-  private static final long ACTIVE_INCIDENT_ID = 8L;
-  private static final String ACTOR_ID = "abc-123";
-
   @Mock private IncidentUseCase incidentUseCase;
+  @Mock private IncidentResponseMapper incidentResponseMapper;
+  @Mock private UserService userService;
+
   @InjectMocks private IncidentController controller;
 
-  @Test
-  @Disabled
-  void testCreateIncident() throws IOException {
-    final Set<UploadMediaCommand> mediaCommands = Set.of(
-        new UploadMediaCommand(
-            mock(InputStream.class),
-            "name",
-            2L, "type"));
-    final CreateIncidentCommand command = new CreateIncidentCommand(
-        new UserId("abc"), "title", "description", mediaCommands, 31.31, 41.23);
-    final Incident incident = createIncident();
-    final IncidentRequestDto incidentRequestDto = createIncidentRequestDto();
-    final IncidentDetailedResponseDto incidentDetailedResponseDto = createIncidentDetailedResponseDto();
+  private Incident incident;
+  private IncidentDetailedResponseDto detailedResponse;
+  private IncidentPreviewResponseDto previewResponse;
 
+  @BeforeEach
+  void setUp() {
+    incident = sampleIncident();
+    detailedResponse = sampleDetailedResponse();
+    previewResponse = samplePreviewResponse();
+  }
+
+  @Test
+  void createReturnsCreatedResponse() {
+    IncidentRequestDto request = incidentRequest();
+    CreateIncidentCommand command = new CreateIncidentCommand(
+        new UserId("uid-1"), "title", "description", Set.of(), 10.0, 20.0);
+
+    when(incidentResponseMapper.toCreateIncidentCommand(request)).thenReturn(command);
     when(incidentUseCase.create(command)).thenReturn(incident);
+    when(incidentResponseMapper.toIncidentDetailedResponseDto(incident)).thenReturn(detailedResponse);
 
-    final ResponseEntity<IncidentDetailedResponseDto> response = controller.create(incidentRequestDto);
+    ResponseEntity<IncidentDetailedResponseDto> response = controller.create(request);
 
-    final IncidentDetailedResponseDto body = response.getBody();
-
-    assertEquals(HttpStatus.CREATED, response.getStatusCode());
-    assertNotNull(body);
-    assertEquals(incidentDetailedResponseDto, body);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    assertThat(response.getBody()).isSameAs(detailedResponse);
+    verify(incidentUseCase).create(command);
   }
 
   @Test
-  void testUpdateIncident() {
-    final Set<UploadMediaCommand> mediaCommands = Set.of(
-        new UploadMediaCommand(
-            mock(InputStream.class),
-            "name",
-            2L, "type"));
-    final CreateIncidentCommand command = new CreateIncidentCommand(
-        new UserId("abc"), "new title", "new description", mediaCommands, 31.31, 41.23);
+  void createReturnsConflictOnDuplicateIncident() {
+    IncidentRequestDto request = incidentRequest();
+    CreateIncidentCommand command = new CreateIncidentCommand(
+        new UserId("uid-1"), "title", "description", Set.of(), 10.0, 20.0);
 
-    final IncidentRequestDto updatedIncidentRequestDto = updateIncidentRequestDto();
-    final IncidentDetailedResponseDto updatedIncidentDetailedResponseDto = updateIncidentDetailedResponseDto();
-    final Incident updatedIncident = updateIncident();
+    when(incidentResponseMapper.toCreateIncidentCommand(request)).thenReturn(command);
+    when(incidentUseCase.create(command)).thenThrow(new DuplicateIncidentException("duplicate"));
 
-    when(incidentUseCase.update(HAPPENING_ID, command)).thenReturn(updatedIncident);
+    ResponseEntity<IncidentDetailedResponseDto> response = controller.create(request);
 
-    final ResponseEntity<IncidentDetailedResponseDto> response =
-        controller.update(HAPPENING_ID, updatedIncidentRequestDto);
-
-    final IncidentDetailedResponseDto body = response.getBody();
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(body);
-    assertEquals(updatedIncidentDetailedResponseDto, body);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(response.getBody()).isNull();
   }
 
   @Test
-  void testGetIncidentInPreview() throws IOException {
-    when(incidentUseCase.findById(HAPPENING_ID)).thenReturn(createIncident());
+  void createReturnsBadRequestOnValidationFailure() {
+    IncidentRequestDto request = incidentRequest();
+    CreateIncidentCommand command = new CreateIncidentCommand(
+        new UserId("uid-1"), "title", "description", Set.of(), 10.0, 20.0);
 
-    ResponseEntity<IncidentPreviewResponseDto> response =
-        controller.getIncidentInPreview(HAPPENING_ID);
-    IncidentPreviewResponseDto body = response.getBody();
+    when(incidentResponseMapper.toCreateIncidentCommand(request)).thenReturn(command);
+    when(incidentUseCase.create(command)).thenThrow(new jakarta.validation.ValidationException("invalid"));
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(body);
-    assertEquals(createIncidentPreviewResponseDto(), body);
+    ResponseEntity<IncidentDetailedResponseDto> response = controller.create(request);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
 
   @Test
-  void testGetIncidentInDetails() throws IOException {
-    Incident incident = createIncident();
-    IncidentDetailedResponseDto dto = createIncidentDetailedResponseDto();
-    when(incidentUseCase.findById(HAPPENING_ID)).thenReturn(incident);
+  void updateReturnsUpdatedResponse() {
+    IncidentRequestDto request = incidentRequest();
+    CreateIncidentCommand command = new CreateIncidentCommand(
+        new UserId("uid-1"), "title", "description", Set.of(), 10.0, 20.0);
 
-    ResponseEntity<IncidentDetailedResponseDto> response =
-        controller.getIncidentInDetails(HAPPENING_ID);
+    when(incidentResponseMapper.toCreateIncidentCommand(request)).thenReturn(command);
+    when(incidentUseCase.update(1L, command)).thenReturn(incident);
+    when(incidentResponseMapper.toIncidentDetailedResponseDto(incident)).thenReturn(detailedResponse);
 
-    IncidentDetailedResponseDto body = response.getBody();
+    ResponseEntity<IncidentDetailedResponseDto> response = controller.update(1L, request);
 
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(body);
-    assertEquals(createIncidentDetailedResponseDto(), body);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isSameAs(detailedResponse);
   }
 
   @Test
-  void testFindActorIncidentsInPreview() throws IOException {
-    final List<Incident> incidents = List.of(createIncident());
-    when(incidentUseCase.findByUserId(ACTOR_ID)).thenReturn(incidents);
+  void updateReturnsNotFoundWhenIncidentMissing() {
+    IncidentRequestDto request = incidentRequest();
+    CreateIncidentCommand command = new CreateIncidentCommand(
+        new UserId("uid-1"), "title", "description", Set.of(), 10.0, 20.0);
+
+    when(incidentResponseMapper.toCreateIncidentCommand(request)).thenReturn(command);
+    when(incidentUseCase.update(1L, command)).thenThrow(new IncidentNotFoundException("missing"));
+
+    ResponseEntity<IncidentDetailedResponseDto> response = controller.update(1L, request);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+  }
+
+  @Test
+  void getIncidentInPreviewReturnsDto() {
+    when(incidentUseCase.findById(5L)).thenReturn(incident);
+    when(incidentResponseMapper.toIncidentPreviewResponseDto(incident)).thenReturn(previewResponse);
+
+    ResponseEntity<IncidentPreviewResponseDto> response = controller.getIncidentInPreview(5L);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isSameAs(previewResponse);
+  }
+
+  @Test
+  void getIncidentInPreviewReturnsBadRequestWhenNotFound() {
+    when(incidentUseCase.findById(5L)).thenThrow(new IncidentNotFoundException("missing"));
+
+    ResponseEntity<IncidentPreviewResponseDto> response = controller.getIncidentInPreview(5L);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+  }
+
+  @Test
+  void findActorIncidentsReturnsEmptyWhenActorMissing() {
+    when(incidentUseCase.findByUserId("actor")).thenThrow(new ActorNotFoundException("missing"));
 
     ResponseEntity<List<IncidentPreviewResponseDto>> response =
-        controller.findActorIncidentsInPreview(ACTOR_ID);
+        controller.findActorIncidentsInPreview("actor");
 
-    List<IncidentPreviewResponseDto> body = response.getBody();
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(body);
-    assertEquals(List.of(createIncidentPreviewResponseDto()), body);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isEmpty();
   }
 
   @Test
-  void testFindNearbyIncidents() throws IOException {
-    when(incidentUseCase.findAllInGivenRange(createRadiusCommand()))
-        .thenReturn(List.of(createIncident()));
+  void findActorIncidentsReturnsMappedDtos() {
+    when(incidentUseCase.findByUserId("actor")).thenReturn(List.of(incident));
+    when(incidentResponseMapper.toIncidentPreviewResponseDto(incident)).thenReturn(previewResponse);
 
     ResponseEntity<List<IncidentPreviewResponseDto>> response =
-        controller.findNearbyIncidents(createRadiusRequestDto());
+        controller.findActorIncidentsInPreview("actor");
 
-    List<IncidentPreviewResponseDto> body = response.getBody();
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(body);
-    assertEquals(List.of(createIncidentPreviewResponseDto()), body);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).containsExactly(previewResponse);
   }
 
   @Test
-  @Disabled
-  void testConfirmIncidentPresence() throws IOException {
+  void findNearbyIncidentsReturnsMappedDtos() {
+    RadiusRequestDto request = new RadiusRequestDto(10.0, 20.0, 500);
+    when(incidentUseCase.findAllInGivenRange(any(RadiusCommand.class))).thenReturn(List.of(incident));
+    when(incidentResponseMapper.toIncidentPreviewResponseDto(incident)).thenReturn(previewResponse);
 
-    Incident confirmedIncident = createConfirmedIncident();
-    IncidentDetailedResponseDto confirmedIncidentDetailedResponseDto = createConfirmedIncidentDetailedResponseDto();
+    ResponseEntity<List<IncidentPreviewResponseDto>> response =
+        controller.findNearbyIncidents(request);
 
-    when(incidentUseCase.confirm(INCIDENT_ID, new UserId("abc"))).thenReturn(confirmedIncident);
-
-    ResponseEntity<IncidentDetailedResponseDto> response =
-        controller.confirmIncidentPresence(INCIDENT_ID);
-
-    IncidentDetailedResponseDto body = response.getBody();
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(body);
-    assertEquals(confirmedIncidentDetailedResponseDto, body);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).containsExactly(previewResponse);
+    verify(incidentUseCase).findAllInGivenRange(any(RadiusCommand.class));
   }
 
   @Test
-  void testDenyIncidentPresence() throws IOException {
-    Incident deniedIncident = createDeniedIncident();
-    IncidentDetailedResponseDto deniedIncidentDetailedResponseDto = createDeniedIncidentDetailedResponseDto();
-    when(incidentUseCase.deny(INCIDENT_ID, new UserId("abc"))).thenReturn(deniedIncident);
+  void findNearbyIncidentsReturnsBadRequestOnInvalidCoordinates() {
+    RadiusRequestDto request = new RadiusRequestDto(10.0, 20.0, 500);
+    when(incidentUseCase.findAllInGivenRange(any(RadiusCommand.class)))
+        .thenThrow(new InvalidCoordinatesException("invalid"));
 
-    ResponseEntity<IncidentDetailedResponseDto> response =
-        controller.denyIncidentPresence(INCIDENT_ID);
+    ResponseEntity<List<IncidentPreviewResponseDto>> response =
+        controller.findNearbyIncidents(request);
 
-    IncidentDetailedResponseDto body = response.getBody();
-
-    assertEquals(HttpStatus.OK, response.getStatusCode());
-    assertNotNull(body);
-    assertEquals(deniedIncidentDetailedResponseDto, body);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
 
   @Test
-  void testDeleteExpiredIncident() {
-    ResponseEntity<Void> response = controller.deleteExpiredIncident(INCIDENT_ID);
-    verify(incidentUseCase).deleteIfExpired(INCIDENT_ID);
-    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-    assertNull(response.getBody());
+  void confirmIncidentReturnsDtoWhenAuthenticated() {
+    User user = sampleUser();
+    when(userService.isAuthenticated()).thenReturn(true);
+    when(userService.getUser()).thenReturn(Optional.of(user));
+    when(incidentUseCase.confirm(10L, user.uid())).thenReturn(incident);
+    when(incidentResponseMapper.toIncidentDetailedResponseDto(incident)).thenReturn(detailedResponse);
 
-    doThrow(new IncidentNotFoundException("nf")).when(incidentUseCase)
-        .deleteIfExpired(NON_EXISTING_INCIDENT_ID);
+    ResponseEntity<IncidentDetailedResponseDto> response = controller.confirmIncidentPresence(10L);
 
-    ResponseEntity<Void> failedResponse = controller.deleteExpiredIncident(NON_EXISTING_INCIDENT_ID);
-
-    verify(incidentUseCase).deleteIfExpired(NON_EXISTING_INCIDENT_ID);
-    assertEquals(HttpStatus.NOT_FOUND, failedResponse.getStatusCode());
-    assertNull(failedResponse.getBody());
-
-    doThrow(new IncidentNotExpiredException("active")).when(incidentUseCase).deleteIfExpired(8L);
-
-    ResponseEntity<Void> notExpiredResponse = controller.deleteExpiredIncident(ACTIVE_INCIDENT_ID);
-
-    verify(incidentUseCase).deleteIfExpired(ACTIVE_INCIDENT_ID);
-    assertEquals(HttpStatus.BAD_REQUEST, notExpiredResponse.getStatusCode());
-    assertNull(notExpiredResponse.getBody());
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).isSameAs(detailedResponse);
   }
 
   @Test
-  void testDeleteIncident() {
-    ResponseEntity<Void> response = controller.delete(INCIDENT_ID);
-    verify(incidentUseCase).deleteById(INCIDENT_ID);
-    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-    assertNull(response.getBody());
+  void confirmIncidentReturnsConflictWhenUserNotAuthenticated() {
+    when(userService.isAuthenticated()).thenReturn(false);
 
-    doThrow(new IncidentNotFoundException("missing")).when(incidentUseCase)
-        .deleteById(NON_EXISTING_INCIDENT_ID);
+    ResponseEntity<IncidentDetailedResponseDto> response = controller.confirmIncidentPresence(10L);
 
-    ResponseEntity<Void> failedResponse = controller.delete(NON_EXISTING_INCIDENT_ID);
-
-    verify(incidentUseCase).deleteById(NON_EXISTING_INCIDENT_ID);
-    assertEquals(HttpStatus.NOT_FOUND, failedResponse.getStatusCode());
-    assertNull(failedResponse.getBody());
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    verify(incidentUseCase, never()).confirm(any(Long.class), any(UserId.class));
   }
 
-  private RadiusCommand createRadiusCommand() {
-    final double latitude = 12.12;
-    final double longitude = 43.43;
-    final double range = 1.1;
+  @Test
+  void denyIncidentReturnsConflictWhenAlreadyDenied() {
+    User user = sampleUser();
+    when(userService.isAuthenticated()).thenReturn(true);
+    when(userService.getUser()).thenReturn(Optional.of(user));
+    when(incidentUseCase.deny(10L, user.uid()))
+        .thenThrow(new IncidentAlreadyConfirmedException("already denied"));
 
-    return new RadiusCommand(latitude, longitude, range);
+    ResponseEntity<IncidentDetailedResponseDto> response = controller.denyIncidentPresence(10L);
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
   }
 
-  private RadiusRequestDto createRadiusRequestDto() {
-    final double latitude = 12.12;
-    final double longitude = 43.43;
-    final double range = 1.1;
+  @Test
+  void deleteExpiredIncidentHandlesScenarios() {
+    ResponseEntity<Void> response = controller.deleteExpiredIncident(50L);
 
-    return new RadiusRequestDto(latitude, longitude, range);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    verify(incidentUseCase).deleteIfExpired(50L);
+
+    doThrow(new IncidentNotFoundException("missing"))
+        .when(incidentUseCase).deleteIfExpired(60L);
+    ResponseEntity<Void> missing = controller.deleteExpiredIncident(60L);
+    assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+
+    doThrow(new IncidentNotExpiredException("active"))
+        .when(incidentUseCase).deleteIfExpired(61L);
+    ResponseEntity<Void> active = controller.deleteExpiredIncident(61L);
+    assertThat(active.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
 
-  private IncidentRequestDto createIncidentRequestDto() {
+  @Test
+  void deleteIncidentHandlesNotFound() {
+    ResponseEntity<Void> response = controller.delete(99L);
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    verify(incidentUseCase).deleteById(99L);
+
+    doThrow(new IncidentNotFoundException("missing")).when(incidentUseCase).deleteById(100L);
+    ResponseEntity<Void> missing = controller.delete(100L);
+    assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+  }
+
+  private IncidentRequestDto incidentRequest() {
     return IncidentRequestDto.builder()
-      .title("title")
-      .description("description")
-      .files(createFiles())
-      .lat(12.12)
-      .lon(43.43)
-      .build();
+        .title("title")
+        .description("description")
+        .files(sampleFiles())
+        .lat(10.0)
+        .lon(20.0)
+        .build();
   }
 
-  private IncidentRequestDto updateIncidentRequestDto() {
-    return IncidentRequestDto.builder()
-      .title("updated title")
-      .description("description")
-      .files(createFiles())
-      .lat(12.12)
-      .lon(43.43)
-      .build();
+  private Set<MultipartFile> sampleFiles() {
+    MultipartFile file = new MockMultipartFile(
+        "files", "photo.png", "image/png", "hello".getBytes());
+    return Set.of(file);
   }
 
-  private IncidentPreviewResponseDto createIncidentPreviewResponseDto() throws IOException {
+  private Incident sampleIncident() {
+    return Incident.builder()
+        .id(new IncidentId(42L))
+        .userId(new UserId("uid-1"))
+        .locationId(new LocationId(7L))
+        .title("Road issue")
+        .description("desc")
+        .media(Set.of(new Media(1L, "photo.png", "image/png")))
+        .sentimentEngagement(SentimentEngagement.builder().likes(1).dislikes(0).build())
+        .engagementStats(new EngagementStats(0, 0, 0))
+        .build();
+  }
+
+  private IncidentDetailedResponseDto sampleDetailedResponse() {
+    return IncidentDetailedResponseDto.builder()
+        .id(42L)
+        .title("Road issue")
+        .description("desc")
+        .userUid("uid-1")
+        .media(Set.of(new MediaDto("photo.png")))
+        .confirm(0)
+        .deny(0)
+        .consecutiveDenies(0)
+        .like(1)
+        .dislike(0)
+        .lat(10.0)
+        .lon(20.0)
+        .address("Main St")
+        .build();
+  }
+
+  private IncidentPreviewResponseDto samplePreviewResponse() {
     return IncidentPreviewResponseDto.builder()
-      .title("title")
-      .media(createGetMediaDtos())
-      .lat(12.12)
-      .lon(43.43)
-      .build();
+        .id(42L)
+        .title("Road issue")
+        .media(Set.of(new MediaDto("photo.png")))
+        .lat(10.0)
+        .lon(20.0)
+        .build();
   }
 
-  private IncidentDetailedResponseDto createIncidentDetailedResponseDto() throws IOException {
-    return IncidentDetailedResponseDto.builder()
-      .title("title")
-      .description("description")
-      .userUid("vanea")
-      .media(createGetMediaDto())
-      .lat(12.12)
-      .lon(43.43)
-      .build();
-  }
-
-  private Set<MultipartFile> createFiles() {
-    byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
-    MultipartFile mockMultipartFile = new MockMultipartFile(
-        "files",
-        "ro ad(1).png",
-        "image/png",
-        data);
-    return Set.of(mockMultipartFile);
-  }
-
-  private Set<MediaDto> createGetMediaDto() {
-    return Set.of(new MediaDto("file"));
-  }
-
-  private Set<Media> createGetMedia() {
-    return Set.of(new Media(3L, "file", "type"));
-  }
-
-  private Set<MediaDto> createGetMediaDtos() {
-    return Set.of(new MediaDto("https://example.com/file"));
-  }
-
-  private IncidentDetailedResponseDto createConfirmedIncidentDetailedResponseDto()
-      throws IOException {
-
-    final int confirmations = 1;
-
-    return createIncidentDetailedResponseDto().toBuilder()
-      .confirm(confirmations)
-      .build();
-  }
-
-  private IncidentDetailedResponseDto createDeniedIncidentDetailedResponseDto() throws IOException {
-    final int denies = 1;
-
-    return createConfirmedIncidentDetailedResponseDto().toBuilder()
-      .deny(denies)
-      .build();
-  }
-
-  private IncidentDetailedResponseDto updateIncidentDetailedResponseDto() {
-    return IncidentDetailedResponseDto.builder()
-      .title("updated title")
-      .description("description")
-      .userUid("vanea")
-      .media(createGetMediaDto())
-      .lat(12.12)
-      .lon(43.43)
-      .build();
-  }
-
-  private Incident createIncident() {
-    return Incident.builder()
-      .userId(new UserId("abc"))
-      .locationId(new LocationId(1L))
-      .title("title")
-      .description("description")
-      .media(createGetMedia())
-      .build();
-  }
-
-  private Incident createConfirmedIncident() {
-    final int confirmations = 1;
-    final int denies = 0;
-    final int consecutiveDenies = 0;
-    final EngagementStats engagementStats = new EngagementStats(
-      confirmations, denies, consecutiveDenies);
-
-    return createIncident().toBuilder()
-      .engagementStats(engagementStats)
-      .build();
-  }
-
-  private Incident createDeniedIncident() {
-    final int confirmations = 0;
-    final int denies = 1;
-    final int consecutiveDenies = 0;
-    final EngagementStats engagementStats = new EngagementStats(
-        confirmations, denies, consecutiveDenies);
-
-    return createIncident().toBuilder()
-      .engagementStats(engagementStats)
-      .build();
-  }
-
-  private Incident updateIncident() {
-    return Incident.builder()
-      .userId(new UserId("abc"))
-      .locationId(new LocationId(1L))
-      .title("updated title")
-      .description("description")
-      .media(createGetMedia())
-      .build();
+  private User sampleUser() {
+    return User.builder()
+        .uid(new UserId("firebase-1"))
+        .email("user@example.com")
+        .name("User")
+        .picture("pic")
+        .role(Role.USER)
+        .emailVerified(true)
+        .deviceIdToken("token")
+        .range(5)
+        .build();
   }
 }

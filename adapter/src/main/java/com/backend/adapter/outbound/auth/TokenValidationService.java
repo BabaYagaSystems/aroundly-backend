@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-final class TokenValidationService {
+class TokenValidationService {
 
   /**
    * Validates a Firebase ID token and extracts user information.
@@ -19,7 +19,7 @@ final class TokenValidationService {
    * @param idToken the Firebase ID token from the Authorization header
    * @return Optional containing FirebaseUserInfo if token is valid, empty otherwise
    */
-  static Optional<User> validateToken(String idToken) {
+  Optional<User> validateToken(String idToken) {
     try {
       FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
 
@@ -50,7 +50,7 @@ final class TokenValidationService {
    * @param authHeader the Authorization header value
    * @return Optional containing the token if format is valid, empty otherwise
    */
-  static Optional<String> extractToken(String authHeader) {
+  Optional<String> extractToken(String authHeader) {
     if (authHeader != null && authHeader.startsWith("Bearer ")) {
       return Optional.of(authHeader.substring(7));
     }
