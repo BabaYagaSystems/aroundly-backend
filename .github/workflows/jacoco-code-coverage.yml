@@ -8,38 +8,38 @@
 
 name: Measure code coverage
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+# on:
+#   push:
+#     branches: [ "main" ]
+#   pull_request:
+#     branches: [ "main" ]
 
-jobs:
-  build:
+# jobs:
+#   build:
 
-    runs-on: ubuntu-latest
+#     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+#     steps:
+#     - name: Checkout repository
+#       uses: actions/checkout@v4
       
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        cache: maven
-    - name: Build with Maven
-      run: mvn clean verify
+#     - name: Set up JDK 21
+#       uses: actions/setup-java@v4
+#       with:
+#         java-version: '21'
+#         distribution: 'temurin'
+#         cache: maven
+#     - name: Build with Maven
+#       run: mvn clean verify
 
-    - name: Upload JaCoCo Report Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: jacoco-report
-        path: ./backend/code-coverage/target/site/jacoco-aggregate/index.html
+#     - name: Upload JaCoCo Report Artifact
+#       uses: actions/upload-artifact@v4
+#       with:
+#         name: jacoco-report
+#         path: ./backend/code-coverage/target/site/jacoco-aggregate/index.html
 
-    - name: Publish coverage report to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.CODE_COVERAGE_TOKEN }}
-        publish_dir: ./backend/code-coverage/target/site/jacoco-aggregate
+#     - name: Publish coverage report to GitHub Pages
+#       uses: peaceiris/actions-gh-pages@v4
+#       with:
+#         github_token: ${{ secrets.CODE_COVERAGE_TOKEN }}
+#         publish_dir: ./backend/code-coverage/target/site/jacoco-aggregate
