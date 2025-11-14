@@ -2,6 +2,12 @@ package com.backend.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.backend.domain.actor.UserId;
 import com.backend.domain.happening.Incident;
@@ -10,52 +16,41 @@ import com.backend.domain.location.Location;
 import com.backend.domain.location.LocationId;
 import com.backend.domain.media.Media;
 import com.backend.domain.reactions.EngagementStats;
-import com.backend.domain.reactions.SentimentEngagement;
 import com.backend.domain.reactions.IncidentEngagementType;
+import com.backend.domain.reactions.SentimentEngagement;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
 import com.backend.port.inbound.commands.UploadMediaCommand;
 import com.backend.port.outbound.repo.IncidentEngagementRepository;
 import com.backend.port.outbound.repo.IncidentRepository;
-import com.backend.port.outbound.repo.LocationRepository;
 import com.backend.port.outbound.storage.ObjectStoragePort;
-import com.backend.services.exceptions.IncidentNotExpiredException;
 import com.backend.services.exceptions.InvalidCoordinatesException;
 import java.io.ByteArrayInputStream;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class IncidentServiceTest {
 
+  @Mock
+  private IncidentRepository incidentRepository;
+
+  @Mock
+  private IncidentEngagementRepository incidentEngagementRepository;
+
+  @Mock
+  private ObjectStoragePort objectStoragePort;
+
+  @Mock
+  private LocationService locationService;
+
+  @InjectMocks
   private IncidentService incidentService;
-  private InMemoryIncidentRepository incidentRepository;
-  private InMemoryIncidentEngagementRepository engagementRepository;
-  private FakeObjectStoragePort objectStoragePort;
-  private InMemoryLocationRepository locationRepository;
-  private TestLocationService locationService;
-
-  @BeforeEach
-  void setUp() {
-    incidentRepository = new InMemoryIncidentRepository();
-    engagementRepository = new InMemoryIncidentEngagementRepository();
-    objectStoragePort = new FakeObjectStoragePort();
-    locationRepository = new InMemoryLocationRepository();
-    locationService = new TestLocationService(locationRepository);
-    incidentService =
-        new IncidentService(
-            incidentRepository, engagementRepository, objectStoragePort, locationService);
-
-    locationRepository.save(new Location(new LocationId(1L), 9.0, 42.0, "Central Park"));
-  }
 
   @Test
   void createPersistsIncidentWithUploadedMedia() throws Exception {
@@ -68,42 +63,57 @@ class IncidentServiceTest {
             .lat(42.0)
             .lon(9.0)
             .build();
+    Location location = new Location(new LocationId(1L), 9.0, 42.0, "Central Park");
+    Set<Media> storedMedia = Set.of(new Media(1, "blocked.png", "image/png"));
+
+    when(locationService.findByCoordinates(any())).thenReturn(location);
+    when(objectStoragePort.uploadAll(command.media())).thenReturn(storedMedia);
+    when(incidentRepository.save(any(Incident.class))).thenAnswer(invocation -> {
+      Incident payload = invocation.getArgument(0);
+      return payload.toBuilder().id(new IncidentId(10L)).build();
+    });
 
     Incident created = incidentService.create(command);
 
-    assertThat(created.getId()).isNotNull();
+    assertThat(created.getId().value()).isEqualTo(10L);
     assertThat(created.getLocationId().value()).isEqualTo(1L);
-    assertThat(created.getMedia())
-        .extracting(Media::filename)
-        .containsExactly("blocked.png");
-    assertThat(incidentRepository.findById(created.getId().value())).contains(created);
+    assertThat(created.getMedia()).isEqualTo(storedMedia);
+    verify(locationService).findByCoordinates(any());
+    verify(objectStoragePort).uploadAll(command.media());
+    verify(incidentRepository).save(any(Incident.class));
   }
 
   @Test
   void confirmAddsEngagementAndUpdatesStats() throws Exception {
     Incident incident = sampleIncident(1L);
-    incidentRepository.save(incident);
     UserId userId = new UserId("user-123");
+
+    when(incidentRepository.findById(1L)).thenReturn(Optional.of(incident));
+    when(incidentRepository.save(any(Incident.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(incidentEngagementRepository.findUserEngagement(1L, userId)).thenReturn(Optional.empty());
 
     Incident updated = incidentService.confirm(1L, userId);
 
     assertThat(updated.getEngagementStats().confirms()).isEqualTo(1);
-    assertThat(engagementRepository.findUserEngagement(1L, userId))
-        .contains(IncidentEngagementType.CONFIRM);
+    verify(incidentEngagementRepository).saveEngagement(1L, userId, IncidentEngagementType.CONFIRM);
+    verify(incidentRepository).save(updated);
   }
 
   @Test
   void denyAddsEngagementAndUpdatesStats() throws Exception {
     Incident incident = sampleIncident(2L);
-    incidentRepository.save(incident);
     UserId userId = new UserId("user-456");
+
+    when(incidentRepository.findById(2L)).thenReturn(Optional.of(incident));
+    when(incidentRepository.save(any(Incident.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(incidentEngagementRepository.findUserEngagement(2L, userId)).thenReturn(Optional.empty());
 
     Incident updated = incidentService.deny(2L, userId);
 
     assertThat(updated.getEngagementStats().denies()).isEqualTo(1);
     assertThat(updated.getEngagementStats().consecutiveDenies()).isEqualTo(1);
-    assertThat(engagementRepository.findUserEngagement(2L, userId))
-        .contains(IncidentEngagementType.DENY);
+    verify(incidentEngagementRepository).saveEngagement(2L, userId, IncidentEngagementType.DENY);
+    verify(incidentRepository).save(updated);
   }
 
   @Test
@@ -119,11 +129,13 @@ class IncidentServiceTest {
             .sentimentEngagement(SentimentEngagement.builder().likes(0).dislikes(0).build())
             .engagementStats(new EngagementStats(0, 3, 3))
             .build();
-    incidentRepository.save(expired);
+
+    when(incidentRepository.findById(3L)).thenReturn(Optional.of(expired));
+    doNothing().when(incidentRepository).deleteById(3L);
 
     incidentService.deleteIfExpired(3L);
 
-    assertThat(incidentRepository.existsById(3L)).isFalse();
+    verify(incidentRepository).deleteById(3L);
   }
 
   @Test
@@ -131,6 +143,7 @@ class IncidentServiceTest {
     RadiusCommand command = new RadiusCommand(0.0, 0.0, 60000);
 
     assertThrows(InvalidCoordinatesException.class, () -> incidentService.findAllInGivenRange(command));
+    verify(incidentRepository, never()).findAllInGivenRange(anyDouble(), anyDouble(), anyDouble());
   }
 
   private static UploadMediaCommand upload(String filename) {
@@ -148,142 +161,5 @@ class IncidentServiceTest {
         .sentimentEngagement(SentimentEngagement.builder().likes(0).dislikes(0).build())
         .engagementStats(new EngagementStats(0, 0, 0))
         .build();
-  }
-
-  private static class InMemoryIncidentRepository implements IncidentRepository {
-    private final Map<Long, Incident> storage = new HashMap<>();
-    private final AtomicLong sequence = new AtomicLong(1);
-
-    @Override
-    public Optional<Incident> findById(long incidentId) {
-      return Optional.ofNullable(storage.get(incidentId));
-    }
-
-    @Override
-    public boolean existsById(long incidentId) {
-      return storage.containsKey(incidentId);
-    }
-
-    @Override
-    public List<Incident> findByUserId(String userId) {
-      return storage.values().stream()
-          .filter(incident -> incident.getUserId().value().equals(userId))
-          .collect(Collectors.toList());
-    }
-
-    @Override
-    public void deleteById(long incidentId) {
-      storage.remove(incidentId);
-    }
-
-    @Override
-    public Incident save(Incident incident) {
-      Incident stored = incident;
-      if (incident.getId() == null) {
-        stored = incident.toBuilder().id(new IncidentId(sequence.getAndIncrement())).build();
-      }
-      storage.put(stored.getId().value(), stored);
-      return stored;
-    }
-
-    @Override
-    public List<Incident> findAllInGivenRange(double lat, double lon, double radiusMeters) {
-      return new ArrayList<>(storage.values());
-    }
-  }
-
-  private static class InMemoryIncidentEngagementRepository implements IncidentEngagementRepository {
-    private final Map<Long, Map<String, IncidentEngagementType>> engagements = new HashMap<>();
-
-    @Override
-    public Optional<IncidentEngagementType> findUserEngagement(long incidentId, UserId userId) {
-      return Optional.ofNullable(
-          engagements.getOrDefault(incidentId, Map.of()).get(userId.value()));
-    }
-
-    @Override
-    public void saveEngagement(long incidentId, UserId userId, IncidentEngagementType type) {
-      engagements
-          .computeIfAbsent(incidentId, id -> new HashMap<>())
-          .put(userId.value(), type);
-    }
-  }
-
-  private static class FakeObjectStoragePort implements ObjectStoragePort {
-
-    @Override
-    public Set<Media> uploadAll(Set<UploadMediaCommand> uploads) {
-      return uploads.stream()
-          .map(upload -> new Media(upload.size(), upload.filename(), upload.contentType()))
-          .collect(Collectors.toSet());
-    }
-
-    @Override
-    public void deleteAllByKeys(Set<String> keys) {
-      // no-op for tests
-    }
-
-    @Override
-    public String presignGet(String key, Duration ttl) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String presignPut(String key, Duration ttl) {
-      throw new UnsupportedOperationException();
-    }
-  }
-
-  private static class InMemoryLocationRepository implements LocationRepository {
-    private final Map<Long, Location> storage = new HashMap<>();
-    private final Map<String, Location> coordinateIndex = new HashMap<>();
-    private long sequence = 1L;
-
-    @Override
-    public Location save(Location location) {
-      LocationId id = location.id() != null ? location.id() : new LocationId(sequence++);
-      Location stored =
-          new Location(id, location.longitude(), location.latitude(), location.address());
-      storage.put(id.value(), stored);
-      coordinateIndex.put(key(stored.latitude(), stored.longitude()), stored);
-      return stored;
-    }
-
-    @Override
-    public Location findById(long id) {
-      return storage.get(id);
-    }
-
-    @Override
-    public Optional<Location> findByCoordinate(double latitude, double longitude) {
-      return Optional.ofNullable(coordinateIndex.get(key(latitude, longitude)));
-    }
-
-    @Override
-    public void deleteById(long id) {
-      Location removed = storage.remove(id);
-      if (removed != null) {
-        coordinateIndex.remove(key(removed.latitude(), removed.longitude()));
-      }
-    }
-
-    private String key(double latitude, double longitude) {
-      return latitude + ":" + longitude;
-    }
-  }
-
-  private static class TestLocationService extends LocationService {
-    private final LocationRepository repository;
-
-    TestLocationService(LocationRepository repository) {
-      super(repository, "test-token");
-      this.repository = repository;
-    }
-
-    @Override
-    public Location findByCoordinates(com.backend.port.inbound.commands.CoordinatesCommand command) {
-      return repository.findByCoordinate(command.lat(), command.lon())
-          .orElseThrow(() -> new IllegalStateException("Missing coordinates in test repository"));
-    }
   }
 }

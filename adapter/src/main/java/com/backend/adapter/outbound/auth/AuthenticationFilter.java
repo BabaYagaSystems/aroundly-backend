@@ -1,8 +1,5 @@
 package com.backend.adapter.outbound.auth;
 
-import static com.backend.adapter.outbound.auth.TokenValidationService.extractToken;
-import static com.backend.adapter.outbound.auth.TokenValidationService.validateToken;
-
 import com.backend.services.UserService;
 import com.backend.domain.actor.User;
 import jakarta.servlet.FilterChain;
@@ -33,6 +30,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class AuthenticationFilter extends OncePerRequestFilter {
 
   private final UserService userService;
+  private final TokenValidationService tokenValidationService;
 
   @Override
   protected void doFilterInternal(
@@ -44,10 +42,10 @@ public class AuthenticationFilter extends OncePerRequestFilter {
       final String authHeader = request.getHeader("Authorization");
 
       if (authHeader != null) {
-        final Optional<String> token = extractToken(authHeader);
+        final Optional<String> token = tokenValidationService.extractToken(authHeader);
 
         if (token.isPresent()) {
-          final Optional<User> userInfo = validateToken(token.get());
+          final Optional<User> userInfo = tokenValidationService.validateToken(token.get());
 
           if (userInfo.isPresent()) {
             try {

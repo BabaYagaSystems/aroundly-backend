@@ -32,4 +32,6 @@ public interface IncidentPersistenceRepository extends JpaRepository<IncidentEnt
       @Param("lat") double lat,
       @Param("lon") double lon,
       @Param("radiusMeters") double radiusMeters);
+
+  List<IncidentEntity> findByUserFirebaseUid(String firebaseUid);
 }

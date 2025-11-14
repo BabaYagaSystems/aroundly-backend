@@ -1,6 +1,10 @@
 package com.backend.services;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.backend.domain.actor.Role;
 import com.backend.domain.actor.User;
@@ -8,45 +12,55 @@ import com.backend.domain.actor.UserId;
 import com.backend.port.inbound.commands.UpdateDeviceIdTokenCommand;
 import com.backend.port.inbound.commands.UpdateRangeCommand;
 import com.backend.port.outbound.repo.UserRepository;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
-  private InMemoryUserRepository userRepository;
-  private UserService userService;
+  @Mock
+  private UserRepository userRepository;
 
-  @BeforeEach
-  void setUp() {
-    userRepository = new InMemoryUserRepository();
-    userService = new UserService(userRepository);
-  }
+  @InjectMocks
+  private UserService userService;
 
   @Test
   void createPersistsUserWhenMissing() {
-    User newUser =
+    final User newUser =
         buildUser("firebase-123", "new@example.com", "New User", "picture", Role.USER, null, 10);
 
-    Optional<User> stored = userService.create(newUser);
+    when(userRepository.existsByFirebaseUid("firebase-123")).thenReturn(false);
+    when(userRepository.save(newUser)).thenReturn(newUser);
+
+    final Optional<User> stored = userService.create(newUser);
 
     assertThat(stored).contains(newUser);
-    assertThat(userRepository.findByFirebaseUid("firebase-123")).contains(newUser);
+    verify(userRepository).save(newUser);
   }
 
   @Test
   void createMergesExistingUserWhenAlreadyPersisted() {
-    userRepository.save(
-        buildUser("firebase-123", "old@example.com", "Old Name", "old-picture", Role.USER, null, 10));
-    User incoming =
+    final User incoming =
         buildUser("firebase-123", "fresh@example.com", "Fresh Name", "fresh-picture", Role.USER, null, 10);
+    final User persisted =
+        buildUser("firebase-123", "old@example.com", "Old Name", "old-picture", Role.USER, null, 10);
 
-    Optional<User> stored = userService.create(incoming);
+    when(userRepository.existsByFirebaseUid("firebase-123")).thenReturn(true);
+    when(userRepository.findByFirebaseUid("firebase-123")).thenReturn(Optional.of(persisted));
+    when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    final Optional<User> stored = userService.create(incoming);
 
     assertThat(stored).isPresent();
-    User merged = userRepository.findByFirebaseUid("firebase-123").orElseThrow();
+    final ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(captor.capture());
+
+    User merged = captor.getValue();
     assertThat(merged.email()).isEqualTo("fresh@example.com");
     assertThat(merged.name()).isEqualTo("Fresh Name");
     assertThat(merged.picture()).isEqualTo("fresh-picture");
@@ -54,38 +68,44 @@ class UserServiceTest {
 
   @Test
   void updateDeviceIdTokenPersistsNewToken() {
-    userRepository.save(
-        buildUser("firebase-123", "user@example.com", "User", "pic", Role.USER, null, 5));
+    final User existing = buildUser("firebase-123", "user@example.com", "User", "pic", Role.USER, null, 5);
+    when(userRepository.findByFirebaseUid("firebase-123")).thenReturn(Optional.of(existing));
+    when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    Optional<User> updated =
+    final Optional<User> updated =
         userService.updateDeviceIdToken(
             new UpdateDeviceIdTokenCommand("firebase-123", "new-token"));
 
     assertThat(updated).isPresent();
-    assertThat(userRepository.findByFirebaseUid("firebase-123").orElseThrow().deviceIdToken())
-        .isEqualTo("new-token");
+    final ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(captor.capture());
+    assertThat(captor.getValue().deviceIdToken()).isEqualTo("new-token");
   }
 
   @Test
   void updateDeviceIdTokenDoesNothingWhenUserMissing() {
-    Optional<User> result =
+    when(userRepository.findByFirebaseUid("missing")).thenReturn(Optional.empty());
+
+    final Optional<User> result =
         userService.updateDeviceIdToken(new UpdateDeviceIdTokenCommand("missing", "token"));
 
     assertThat(result).isEmpty();
-    assertThat(userRepository.data).isEmpty();
+    verify(userRepository, never()).save(any());
   }
 
   @Test
   void updateRangePersistsNewRange() {
-    userRepository.save(
-        buildUser("firebase-123", "user@example.com", "User", "pic", Role.USER, null, 5));
+    final User existing = buildUser("firebase-123", "user@example.com", "User", "pic", Role.USER, null, 5);
+    when(userRepository.findByFirebaseUid("firebase-123")).thenReturn(Optional.of(existing));
+    when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-    Optional<User> updated =
+    final Optional<User> updated =
         userService.updateRange(new UpdateRangeCommand("firebase-123", 15));
 
     assertThat(updated).isPresent();
-    assertThat(userRepository.findByFirebaseUid("firebase-123").orElseThrow().range())
-        .isEqualTo(15);
+    final ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+    verify(userRepository).save(captor.capture());
+    assertThat(captor.getValue().range()).isEqualTo(15);
   }
 
   private static User buildUser(
@@ -105,31 +125,5 @@ class UserServiceTest {
         .deviceIdToken(deviceIdToken)
         .range(range)
         .build();
-  }
-
-  private static class InMemoryUserRepository implements UserRepository {
-
-    private final Map<String, User> data = new HashMap<>();
-
-    @Override
-    public User save(User user) {
-      data.put(user.uid().value(), user);
-      return user;
-    }
-
-    @Override
-    public Optional<User> findByFirebaseUid(String firebaseUid) {
-      return Optional.ofNullable(data.get(firebaseUid));
-    }
-
-    @Override
-    public Optional<User> findByEmail(String email) {
-      return data.values().stream().filter(user -> email.equals(user.email())).findFirst();
-    }
-
-    @Override
-    public boolean existsByFirebaseUid(String firebaseUid) {
-      return data.containsKey(firebaseUid);
-    }
   }
 }
