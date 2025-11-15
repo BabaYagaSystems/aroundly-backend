@@ -13,6 +13,7 @@ import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfir
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
+import com.backend.adapter.inbound.websocket.IncidentBroadcast;
 import com.backend.services.UserService;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
@@ -31,6 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,15 +51,17 @@ public class IncidentController {
   private final IncidentUseCase incidentUseCase;
   private final IncidentResponseMapper incidentResponseMapper;
   private final UserService userService;
+  private final IncidentBroadcast incidentBroadcast;
 
   public IncidentController(
       IncidentUseCase incidentUseCase,
       IncidentResponseMapper incidentResponseMapper,
-      UserService userService) {
+      UserService userService, IncidentBroadcast incidentBroadcast) {
 
     this.incidentUseCase = incidentUseCase;
     this.incidentResponseMapper = incidentResponseMapper;
     this.userService = userService;
+    this.incidentBroadcast = incidentBroadcast;
   }
 
   /**
@@ -77,6 +81,7 @@ public class IncidentController {
       @ApiResponse(responseCode = "409", description = "IncidentEntity already exists")
   })
   @SecurityRequirement(name = "bearerAuth")
+  @SendTo("/topic/incidents")
   public ResponseEntity<IncidentDetailedResponseDto> create(
       @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
 
@@ -85,6 +90,8 @@ public class IncidentController {
 
       Incident incident = incidentUseCase.create(createIncidentCommand);
       IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+
+      incidentBroadcast.broadcastCreatedIncident(incidentDetailedResponseDto);
 
       return new ResponseEntity<>(incidentDetailedResponseDto, HttpStatus.CREATED);
 

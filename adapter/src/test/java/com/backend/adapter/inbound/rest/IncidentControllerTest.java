@@ -19,6 +19,7 @@ import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfir
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
 import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
 import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
+import com.backend.adapter.inbound.websocket.IncidentBroadcast;
 import com.backend.domain.actor.Role;
 import com.backend.domain.actor.User;
 import com.backend.domain.actor.UserId;
@@ -54,6 +55,7 @@ class IncidentControllerTest {
   @Mock private IncidentUseCase incidentUseCase;
   @Mock private IncidentResponseMapper incidentResponseMapper;
   @Mock private UserService userService;
+  @Mock private IncidentBroadcast incidentBroadcast;
 
   @InjectMocks private IncidentController controller;
 
