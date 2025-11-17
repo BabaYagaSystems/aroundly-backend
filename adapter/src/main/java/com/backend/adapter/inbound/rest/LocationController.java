@@ -5,9 +5,9 @@ import static com.backend.adapter.inbound.mapper.LocationMapper.toCoordinatesCom
 
 import com.backend.adapter.inbound.dto.request.CoordinatesRequestDto;
 import com.backend.adapter.inbound.dto.response.AddressResponseDto;
-import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
 import com.backend.port.inbound.LocationUseCase;
 import com.backend.port.inbound.commands.CoordinatesCommand;
+import com.backend.services.exceptions.InvalidCoordinatesException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

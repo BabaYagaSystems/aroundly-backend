@@ -7,18 +7,18 @@ import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentDetailedResponseDto;
 import com.backend.adapter.inbound.dto.response.incident.IncidentPreviewResponseDto;
 import com.backend.adapter.inbound.mapper.IncidentResponseMapper;
-import com.backend.adapter.inbound.rest.exception.incident.ActorNotFoundException;
-import com.backend.adapter.inbound.rest.exception.incident.DuplicateIncidentException;
-import com.backend.adapter.inbound.rest.exception.incident.IncidentAlreadyConfirmedException;
-import com.backend.adapter.inbound.rest.exception.incident.IncidentNotExpiredException;
-import com.backend.adapter.inbound.rest.exception.incident.IncidentNotFoundException;
-import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
 import com.backend.adapter.inbound.websocket.IncidentBroadcast;
 import com.backend.services.UserService;
 import com.backend.domain.happening.Incident;
 import com.backend.port.inbound.IncidentUseCase;
 import com.backend.port.inbound.commands.CreateIncidentCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
+import com.backend.services.exceptions.ActorNotFoundException;
+import com.backend.services.exceptions.DuplicateIncidentException;
+import com.backend.services.exceptions.IncidentAlreadyConfirmedException;
+import com.backend.services.exceptions.IncidentNotExpiredException;
+import com.backend.services.exceptions.IncidentNotFoundException;
+import com.backend.services.exceptions.InvalidCoordinatesException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -389,7 +389,7 @@ public class IncidentController {
       incidentUseCase.deleteById(id);
 
       return ResponseEntity.noContent().build();
-    } catch (IncidentNotFoundException e) {
+    } catch (com.backend.services.exceptions.IncidentNotFoundException e) {
       log.warn("IncidentEntity not found for deletion: {}", id);
       return ResponseEntity.notFound().build();
     }
