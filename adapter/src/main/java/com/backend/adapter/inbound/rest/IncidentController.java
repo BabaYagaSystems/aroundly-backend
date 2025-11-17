@@ -83,13 +83,13 @@ public class IncidentController {
   @SecurityRequirement(name = "bearerAuth")
   @SendTo("/topic/incidents")
   public ResponseEntity<IncidentDetailedResponseDto> create(
-      @ModelAttribute @Valid IncidentRequestDto incidentRequestDto) {
+      @ModelAttribute @Valid final IncidentRequestDto incidentRequestDto) {
 
     try {
       final CreateIncidentCommand createIncidentCommand = incidentResponseMapper.toCreateIncidentCommand(incidentRequestDto);
 
-      Incident incident = incidentUseCase.create(createIncidentCommand);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+      final Incident incident = incidentUseCase.create(createIncidentCommand);
+      final IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
       incidentBroadcast.broadcastCreatedIncident(incidentDetailedResponseDto);
 
@@ -122,15 +122,15 @@ public class IncidentController {
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found")
   })
   public ResponseEntity<IncidentDetailedResponseDto> update(
-      @PathVariable long id,
-      @RequestBody @Valid IncidentRequestDto newIncidentRequestDto) {
+      @PathVariable final long id,
+      @RequestBody @Valid final IncidentRequestDto newIncidentRequestDto) {
 
     try {
-      CreateIncidentCommand newCreateIncidentCommand = incidentResponseMapper
+      final CreateIncidentCommand newCreateIncidentCommand = incidentResponseMapper
           .toCreateIncidentCommand(newIncidentRequestDto);
 
-      Incident updatedIncident = incidentUseCase.update(id, newCreateIncidentCommand);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(updatedIncident);
+      final Incident updatedIncident = incidentUseCase.update(id, newCreateIncidentCommand);
+      final IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(updatedIncident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -158,10 +158,10 @@ public class IncidentController {
       @ApiResponse(responseCode = "200", description = "IncidentEntity preview retrieved successfully"),
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found")
   })
-  public ResponseEntity<IncidentPreviewResponseDto> getIncidentInPreview(@PathVariable long id) {
+  public ResponseEntity<IncidentPreviewResponseDto> getIncidentInPreview(@PathVariable final long id) {
     try {
-      Incident incident = incidentUseCase.findById(id);
-      IncidentPreviewResponseDto incidentPreviewResponseDto =
+      final Incident incident = incidentUseCase.findById(id);
+      final IncidentPreviewResponseDto incidentPreviewResponseDto =
           incidentResponseMapper.toIncidentPreviewResponseDto(incident);
 
       return ResponseEntity.ok(incidentPreviewResponseDto);
@@ -189,10 +189,10 @@ public class IncidentController {
       @ApiResponse(responseCode = "200", description = "IncidentEntity details retrieved successfully"),
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found")
   })
-  public ResponseEntity<IncidentDetailedResponseDto> getIncidentInDetails(@PathVariable long id) {
+  public ResponseEntity<IncidentDetailedResponseDto> getIncidentInDetails(@PathVariable final long id) {
     try {
-      Incident incident = incidentUseCase.findById(id);
-      IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+      final Incident incident = incidentUseCase.findById(id);
+      final IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
       return ResponseEntity.ok(incidentDetailedResponseDto);
     } catch (IncidentNotFoundException e) {
@@ -219,10 +219,12 @@ public class IncidentController {
       @ApiResponse(responseCode = "200", description = "Actor incidents retrieved successfully"),
       @ApiResponse(responseCode = "400", description = "Invalid actor ID")
   })
-  public ResponseEntity<List<IncidentPreviewResponseDto>> findActorIncidentsInPreview(@PathVariable String id) {
+  public ResponseEntity<List<IncidentPreviewResponseDto>> findActorIncidentsInPreview(
+      @PathVariable final String id) {
+
     try {
-      List<Incident> incidents = incidentUseCase.findByUserId(id);
-      List<IncidentPreviewResponseDto> incidentPreviewResponseDtos = incidents.stream()
+      final List<Incident> incidents = incidentUseCase.findByUserId(id);
+      final List<IncidentPreviewResponseDto> incidentPreviewResponseDtos = incidents.stream()
           .map(incidentResponseMapper::toIncidentPreviewResponseDto)
           .toList();
 
@@ -249,15 +251,14 @@ public class IncidentController {
       @ApiResponse(responseCode = "400", description = "Invalid coordinates or radius")
   })
   public ResponseEntity<List<IncidentPreviewResponseDto>> findNearbyIncidents(
-      @ModelAttribute @Valid RadiusRequestDto radiusRequestDto) {
+      @ModelAttribute @Valid final RadiusRequestDto radiusRequestDto) {
 
     try {
-      RadiusCommand radiusCommand = toRadiusCommand(radiusRequestDto);
-      List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
-      List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
+      final RadiusCommand radiusCommand = toRadiusCommand(radiusRequestDto);
+      final List<Incident> incidents = incidentUseCase.findAllInGivenRange(radiusCommand);
+      final List<IncidentPreviewResponseDto> responseDtos = incidents.stream()
           .map(incidentResponseMapper::toIncidentPreviewResponseDto)
           .toList();
-
 
       return ResponseEntity.ok(responseDtos);
     } catch (InvalidCoordinatesException e) {
@@ -282,12 +283,12 @@ public class IncidentController {
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already confirmed")
   })
-  public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(@PathVariable long id) {
+  public ResponseEntity<IncidentDetailedResponseDto> confirmIncidentPresence(@PathVariable final long id) {
     try {
 
       if (userService.isAuthenticated()) {
-        Incident incident = incidentUseCase.confirm(id, userService.getUser().get().uid());
-        IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+        final Incident incident = incidentUseCase.confirm(id, userService.getUser().get().uid());
+        final IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
 
         return ResponseEntity.ok(incidentDetailedResponseDto);
       }
@@ -319,11 +320,12 @@ public class IncidentController {
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found"),
       @ApiResponse(responseCode = "409", description = "IncidentEntity already denied")
   })
-  public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(@PathVariable long id) {
+  public ResponseEntity<IncidentDetailedResponseDto> denyIncidentPresence(@PathVariable final long id) {
     try {
       if (userService.isAuthenticated()) {
-        Incident incident = incidentUseCase.deny(id, userService.getUser().get().uid());
-        IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+        final Incident incident = incidentUseCase.deny(id, userService.getUser().get().uid());
+        final IncidentDetailedResponseDto incidentDetailedResponseDto = incidentResponseMapper.toIncidentDetailedResponseDto(incident);
+
         return ResponseEntity.ok(incidentDetailedResponseDto);
       }
     } catch (IncidentNotFoundException e) {
@@ -353,7 +355,7 @@ public class IncidentController {
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found"),
       @ApiResponse(responseCode = "400", description = "IncidentEntity has not expired")
   })
-  public ResponseEntity<Void> deleteExpiredIncident(@PathVariable long id) {
+  public ResponseEntity<Void> deleteExpiredIncident(@PathVariable final long id) {
     try {
       incidentUseCase.deleteIfExpired(id);
 
@@ -382,7 +384,7 @@ public class IncidentController {
       @ApiResponse(responseCode = "204", description = "IncidentEntity deleted successfully"),
       @ApiResponse(responseCode = "404", description = "IncidentEntity not found")
   })
-  public ResponseEntity<Void> delete(@PathVariable long id) {
+  public ResponseEntity<Void> delete(@PathVariable final long id) {
     try {
       incidentUseCase.deleteById(id);
 

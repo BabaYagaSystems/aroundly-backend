@@ -23,4 +23,13 @@ public interface LocationUseCase {
      * @return the location at the given coordinates
      */
     Location findByCoordinates(CoordinatesCommand coordinatesCommand);
+
+    /**
+     * Performs reverse geocoding to return a readable address string for the
+     * provided coordinates.
+     *
+     * @param coordinatesCommand the latitude/longitude payload
+     * @return address string supplied by the backing geocoding provider
+     */
+    String getAddress(CoordinatesCommand coordinatesCommand);
 }
