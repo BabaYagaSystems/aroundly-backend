@@ -8,9 +8,9 @@ import static org.mockito.Mockito.when;
 
 import com.backend.adapter.inbound.dto.request.CoordinatesRequestDto;
 import com.backend.adapter.inbound.dto.response.AddressResponseDto;
-import com.backend.adapter.inbound.rest.exception.incident.InvalidCoordinatesException;
 import com.backend.port.inbound.LocationUseCase;
 import com.backend.port.inbound.commands.CoordinatesCommand;
+import com.backend.services.exceptions.InvalidCoordinatesException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
