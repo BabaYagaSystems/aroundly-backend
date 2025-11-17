@@ -54,7 +54,7 @@ public class LocationService implements LocationUseCase {
      * @return the matching location, or null if not found
      */
     @Override
-    public Location findByCoordinates(CoordinatesCommand coordinatesCommand) {
+    public Location findByCoordinates(final CoordinatesCommand coordinatesCommand) {
         final double latitude = coordinatesCommand.lat();
         final double longitude = coordinatesCommand.lon();
 
@@ -63,7 +63,23 @@ public class LocationService implements LocationUseCase {
               .orElseGet(() -> createLocation(longitude, latitude));
     }
 
-    private Location createLocation(double longitude, double latitude) {
+    /**
+     * Retrieves a human-readable address for the provided coordinates by
+     * delegating to the reverse geocoding helper so callers do not need to
+     * interact with Mapbox details directly.
+     *
+     * @param coordinatesCommand the latitude/longitude payload
+     * @return formatted address resolved by the external provider
+     */
+    @Override
+    public String getAddress(final CoordinatesCommand coordinatesCommand) {
+        final double latitude = coordinatesCommand.lat();
+        final double longitude = coordinatesCommand.lon();
+
+        return reverseGeocode(longitude, latitude);
+    }
+
+  private Location createLocation(final double longitude, final double latitude) {
         String address = reverseGeocode(longitude, latitude);
         Location newLocation = Location.builder()
           .longitude(longitude)
@@ -74,7 +90,7 @@ public class LocationService implements LocationUseCase {
         return locationRepository.save(newLocation);
     }
 
-    private String reverseGeocode(double longitude, double latitude) {
+    private String reverseGeocode(final double longitude, final double latitude) {
         final String language = "en";
         String uri = String.format(
                 "https://api.mapbox.com/geocoding/v5/mapbox.places/%f,%f.json?language=%s&limit=1&access_token=%s",
@@ -84,8 +100,8 @@ public class LocationService implements LocationUseCase {
                 mapboxToken);
 
         try {
-            HttpRequest request = HttpRequest.newBuilder(URI.create(uri)).GET().build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            final HttpRequest request = HttpRequest.newBuilder(URI.create(uri)).GET().build();
+            final HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 429) {
                 throw new RuntimeException("Rate limited by Mapbox");
@@ -94,8 +110,8 @@ public class LocationService implements LocationUseCase {
                 throw new RuntimeException("Mapbox error: " + response.body());
             }
 
-            JsonNode node = objectMapper.readTree(response.body());
-            JsonNode features = node.path("features");
+            final JsonNode node = objectMapper.readTree(response.body());
+            final JsonNode features = node.path("features");
             if (features.isArray() && !features.isEmpty()) {
                 return features.get(0).path("place_name").asText("Unknown address");
             }

@@ -2,10 +2,12 @@ package com.backend.adapter.inbound.mapper;
 
 import com.backend.adapter.inbound.dto.request.CoordinatesRequestDto;
 import com.backend.adapter.inbound.dto.request.RadiusRequestDto;
+import com.backend.adapter.inbound.dto.response.AddressResponseDto;
 import com.backend.adapter.inbound.dto.response.CoordinateResponseDto;
 import com.backend.domain.location.Location;
 import com.backend.port.inbound.commands.CoordinatesCommand;
 import com.backend.port.inbound.commands.RadiusCommand;
+
 
 public final class LocationMapper {
 
@@ -27,6 +29,10 @@ public final class LocationMapper {
         location.latitude(),
         location.longitude(),
         location.address());
+  }
+
+  public static AddressResponseDto toAddressResponseDto(String address) {
+    return new AddressResponseDto(address);
   }
 
 }
