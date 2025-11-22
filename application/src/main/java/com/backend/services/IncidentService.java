@@ -31,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Service implementation for handling operations on Incident entities.
@@ -307,6 +308,7 @@ public class IncidentService implements IncidentUseCase {
      * Deletes all incidents whose expiration has passed relative to current time.
      */
     @Override
+    @Transactional
     public void deleteExpiredIncidents() {
         final Instant now = Instant.now();
         final List<Incident> expiredIncidents = incidentRepository.findExpired(now);
