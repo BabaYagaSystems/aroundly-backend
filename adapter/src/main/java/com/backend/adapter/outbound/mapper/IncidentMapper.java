@@ -32,7 +32,7 @@ public final class IncidentMapper {
         .description(domain.getDescription())
         .location(locationEntity)
         .timePosted(domain.createdAt())
-        .range(1000)
+        .range(10)
         .confirms(domain.getEngagementStats().confirms())
         .denies(domain.getEngagementStats().denies())
         .expiresAt(domain.getExpiresAt());
