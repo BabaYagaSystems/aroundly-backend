@@ -9,6 +9,7 @@ import com.backend.port.outbound.repo.IncidentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,6 +59,13 @@ public class IncidentPersistence implements IncidentRepository {
   @Override
   public List<Incident> findByUserId(String userId) {
       return incidentPersistenceRepository.findByUserFirebaseUid(userId).stream()
+          .map(incidentMapper::mapToDomain)
+          .toList();
+  }
+
+  @Override
+  public List<Incident> findExpired(Instant reference) {
+      return incidentPersistenceRepository.findByExpiresAtBefore(reference).stream()
           .map(incidentMapper::mapToDomain)
           .toList();
   }

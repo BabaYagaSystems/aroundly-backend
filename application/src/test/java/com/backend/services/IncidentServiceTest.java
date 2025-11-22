@@ -26,6 +26,7 @@ import com.backend.port.outbound.repo.IncidentRepository;
 import com.backend.port.outbound.storage.ObjectStoragePort;
 import com.backend.services.exceptions.InvalidCoordinatesException;
 import java.io.ByteArrayInputStream;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -144,6 +145,18 @@ class IncidentServiceTest {
 
     assertThrows(InvalidCoordinatesException.class, () -> incidentService.findAllInGivenRange(command));
     verify(incidentRepository, never()).findAllInGivenRange(anyDouble(), anyDouble(), anyDouble());
+  }
+
+  @Test
+  void deleteExpiredIncidentsDeletesEveryExpiredRecord() {
+    Incident expired = sampleIncident(7L);
+    when(incidentRepository.findExpired(any())).thenReturn(List.of(expired));
+    doNothing().when(incidentRepository).deleteById(7L);
+
+    incidentService.deleteExpiredIncidents();
+
+    verify(incidentRepository).findExpired(any());
+    verify(incidentRepository).deleteById(7L);
   }
 
   private static UploadMediaCommand upload(String filename) {

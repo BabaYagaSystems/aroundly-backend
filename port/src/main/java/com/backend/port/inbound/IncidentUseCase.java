@@ -93,4 +93,10 @@ public interface IncidentUseCase {
      * @param incidentId the unique identifier of the incident to check and possibly delete
      */
     void deleteIfExpired(long incidentId);
+
+    /**
+     * Deletes every incident whose {@code expiresAt} timestamp has passed.
+     * Intended for scheduled/maintenance calls rather than user-initiated ones.
+     */
+    void deleteExpiredIncidents();
 }

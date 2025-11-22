@@ -24,6 +24,7 @@ import com.backend.services.exceptions.InvalidCoordinatesException;
 import com.backend.services.exceptions.LocationNotFoundException;
 import com.backend.services.exceptions.ValidationException;
 
+import java.time.Instant;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 
@@ -300,6 +301,24 @@ public class IncidentService implements IncidentUseCase {
             throw new RuntimeException("Failed to delete expired incident", e);
         }
 
+    }
+
+    /**
+     * Deletes all incidents whose expiration has passed relative to current time.
+     */
+    @Override
+    public void deleteExpiredIncidents() {
+        final Instant now = Instant.now();
+        final List<Incident> expiredIncidents = incidentRepository.findExpired(now);
+
+        expiredIncidents.forEach(incident -> {
+            try {
+                incidentRepository.deleteById(incident.getId().value());
+            } catch (Exception e) {
+                throw new RuntimeException(
+                    "Failed to delete expired incident with ID: " + incident.getId().value(), e);
+            }
+        });
     }
 
     /**

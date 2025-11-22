@@ -370,6 +370,21 @@ public class IncidentController {
   }
 
   /**
+   * Deletes every incident whose expiration timestamp has passed.
+   *
+   * @return 204 No Content after cleanup
+   */
+  @DeleteMapping("/expired")
+  @Operation(
+      summary = "Deletes all expired incidents",
+      description = "Removes every incident whose expires_at is in the past"
+  )
+  public ResponseEntity<Void> deleteExpiredIncidents() {
+    incidentUseCase.deleteExpiredIncidents();
+    return ResponseEntity.noContent().build();
+  }
+
+  /**
    * Deletes an incident by its identifier.
    *
    * @param id incident identifier

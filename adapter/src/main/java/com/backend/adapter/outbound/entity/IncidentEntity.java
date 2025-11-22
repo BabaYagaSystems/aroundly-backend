@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.backend.adapter.outbound.entity.IncidentEngagementEntity;
 
 @Entity(name = "incidents")
 @Builder
@@ -32,6 +33,10 @@ public class IncidentEntity {
   @OneToMany(mappedBy = "incidentEntity", cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default
   private Set<MediaEntity> media = new HashSet<>();
+
+  @OneToMany(mappedBy = "incident", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
+  private Set<IncidentEngagementEntity> engagements = new HashSet<>();
 
   @ManyToOne
   @JoinColumn(

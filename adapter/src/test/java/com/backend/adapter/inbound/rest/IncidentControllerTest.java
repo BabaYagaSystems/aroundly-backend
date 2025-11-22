@@ -281,6 +281,14 @@ class IncidentControllerTest {
     assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 
+  @Test
+  void deleteExpiredIncidentsCleanupEndpointReturnsNoContent() {
+    ResponseEntity<Void> response = controller.deleteExpiredIncidents();
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    verify(incidentUseCase).deleteExpiredIncidents();
+  }
+
   private IncidentRequestDto incidentRequest() {
     return IncidentRequestDto.builder()
         .title("title")

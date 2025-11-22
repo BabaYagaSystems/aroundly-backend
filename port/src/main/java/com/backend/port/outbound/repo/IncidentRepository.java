@@ -1,6 +1,7 @@
 package com.backend.port.outbound.repo;
 
 import com.backend.domain.happening.Incident;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,4 +56,12 @@ public interface IncidentRepository {
    * @return A list of incidents within the given range.
    */
   List<Incident> findAllInGivenRange(double lat, double lon, double radiusMeters);
+
+  /**
+   * Retrieves incidents whose expiration timestamp is earlier than the provided instant.
+   *
+   * @param reference moment to compare against {@code expiresAt}
+   * @return incidents considered expired
+   */
+  List<Incident> findExpired(Instant reference);
 }
